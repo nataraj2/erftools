@@ -1,3 +1,4 @@
+import numpy as np
 import f90nml
 
 from .WRFdefs import time_control, domains#, physics
@@ -22,6 +23,10 @@ class WRFnamelist(object):
     def calculate_inputs(self):
         tdelta = self.time_control.end_datetime - self.time_control.start_datetime
         self.erf_input['stop_time'] = tdelta.total_seconds()
-        n_cell = [self.domains.e_we[0], self.domains.e_sn[0], self.domains.e_vert[0]]
-        self.erf_input['amr.n_cell'] = n_cell
+
+        self.erf_input['amr.n_cell'] = [self.domains.e_we[0], self.domains.e_sn[0], self.domains.e_vert[0]]
+
+        dt = np.array(self.domains.parent_time_step_ratio) * self.domains.time_step
+        self.erf_input['erf.fixed_dt'] = dt[0] # TODO: verify that refined regions have finer time steps
+        
         

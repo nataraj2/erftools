@@ -22,9 +22,9 @@ VERSION = '0.1.1'
 REQUIRED = [
     # core
     'f90nml',
+    'numpy>=1.18.1',
     #'pandas>=1.0.1',
     #'matplotlib>=3',
-    #'numpy>=1.18.1',
     #'scipy>=1.4.1',
     #'xarray>=0.15.0',
     #'netcdf4>=1.5.1',

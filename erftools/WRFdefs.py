@@ -10,7 +10,7 @@ class time_control(object):
   sim range: {self.start_datetime} to {self.end_datetime}"""
 
     def parse_datetime_range(self):
-        # assume all domains have the same start/end datetime for now
+        # assume all domains have the same start/end datetime for now; TODO: allow for variable start times per domain
         idom = 0
         start_year  = self.legacy['start_year'][idom]
         start_month = self.legacy['start_month'][idom]
@@ -28,6 +28,7 @@ class domains(object):
     def __init__(self,nmldict):
         self.legacy = nmldict
         self.parse_grid()
+        self.parse_time_integration()
 
     def __str__(self):
         s = 'WRF `domains` parameters\n'
@@ -52,4 +53,9 @@ class domains(object):
         for dom in range(1,self.max_dom):
             assert (self.dx[dom-1]/self.dx[dom] == parent_grid_ratio[dom])
             assert (self.dy[dom-1]/self.dy[dom] == parent_grid_ratio[dom])
+
+    def parse_time_integration(self):
+        self.time_step = self.legacy['time_step'] # seconds
+        self.parent_time_step_ratio = self.legacy['parent_time_step_ratio']
+
 
