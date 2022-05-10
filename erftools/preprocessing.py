@@ -32,7 +32,7 @@ class WRFnamelist(object):
         heights = self.domains.get_heights()
         print('destaggered (cell center) heights:',heights)
         self.erf_input['geometry.prob_extent'] = n_cell * np.array([self.domains.dx[0], self.domains.dy[0], np.nan])
-        self.erf_input['geometry.prob_extent'][2] = heights[2]
+        self.erf_input['geometry.prob_extent'][2] = heights[-1]
         self.erf_input['amr.n_cell'] = n_cell
 
         # TODO: verify that refined regions will take finer time steps
