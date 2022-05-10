@@ -2,7 +2,7 @@ from collections.abc import MutableMapping
 import numpy as np
 
 
-class ERFinput(MutableMapping):
+class ERFInputFile(MutableMapping):
     """A dictionary that applies an arbitrary key-altering
        function before accessing the keys"""
 

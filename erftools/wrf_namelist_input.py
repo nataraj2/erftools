@@ -2,7 +2,6 @@
 Processing for each namelist within a WRF namelist.input file
 """
 from datetime import datetime
-import xarray as xr
 
 class time_control(object):
     def __init__(self,nmldict):
@@ -64,16 +63,6 @@ class domains(object):
             assert (self.dy[dom-1]/self.dy[dom] == self.parent_grid_ratio[dom])
             assert self.i_parent_start[0] == 1
             assert self.j_parent_start[0] == 1
-
-    def get_heights(self):
-        wrfinp = xr.open_dataset('wrfinput_d01')
-        ph = wrfinp['PH'] # perturbation geopotential
-        phb = wrfinp['PHB'] # base-state geopotential
-        hgt = wrfinp['HGT'] # terrain height
-        geo = ph + phb # geopotential, dims=(Time: 1, bottom_top_stag, south_north, west_east)
-        geo = geo/9.81 - hgt
-        geo = geo.isel(Time=0).mean(['south_north','west_east']).values
-        return (geo[1:] + geo[:-1]) / 2 # destaggered
 
 
 pbl_mapping = {
