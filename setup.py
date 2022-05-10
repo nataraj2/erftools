@@ -23,9 +23,9 @@ REQUIRED = [
     # core
     'f90nml',
     'numpy>=1.18.1',
+    'pandas>=1.0.1',
     'xarray>=0.15.0',
     'netcdf4>=1.5.1',
-    #'pandas>=1.0.1',
     #'matplotlib>=3',
     #'scipy>=1.4.1',
     #'dask>=2.10.1',
