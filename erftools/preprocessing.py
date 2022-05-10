@@ -30,7 +30,7 @@ class WRFnamelist(object):
         # TODO: add vertical stretching
         n_cell = np.array([self.domains.e_we[0], self.domains.e_sn[0], self.domains.e_vert[0]-1])
         heights = self.domains.get_heights()
-        print('destaggered (cell center) heights:',heights)
+        #print('destaggered (cell center) heights:',heights)
         self.erf_input['geometry.prob_extent'] = n_cell * np.array([self.domains.dx[0], self.domains.dy[0], np.nan])
         self.erf_input['geometry.prob_extent'][2] = heights[-1]
         self.erf_input['amr.n_cell'] = n_cell

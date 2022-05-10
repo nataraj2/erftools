@@ -96,6 +96,20 @@ sfclay_mapping = {
     5: 'MYNN',
 }
 
+valid_sfclay = {
+    # for each PBL scheme
+    1:  [1],
+    2:  [2],
+    5:  [1,2,5,91],
+    6:  [1,2,5,91],
+    7:  [1,7,91],
+    8:  [1,2,91],
+    9:  [1,2,91],
+    11: [1,91],
+    12: [1,91],
+    91: [1,91],
+}
+
 
 class physics(object):
 
@@ -111,6 +125,12 @@ class physics(object):
         return s.rstrip()
 
     def parse_all(self):
-        self.bl_pbl_physics = [pbl_mapping.get(idx,'UNKNOWN') for idx in self.nml['bl_pbl_physics']]
-        self.sf_sfclay_physics = [sfclay_mapping.get(idx,'UNKNOWN') for idx in self.nml['sf_sfclay_physics']]
+        pbl_idx_list = self.nml['bl_pbl_physics']
+        sfclay_idx_list = self.nml['sf_sfclay_physics']
+        for pbl_idx,sfclay_idx in zip(pbl_idx_list, sfclay_idx_list):
+            if sfclay_idx not in valid_sfclay[pbl_idx]:
+                print(f'WARNING: unexpected pairing of bl_pbl_physics={pbl_idx} with sf_sfclay_idx={sfclay_idx}')
+        self.bl_pbl_physics = [pbl_mapping.get(idx,'UNKNOWN') for idx in pbl_idx_list]
+        self.sf_sfclay_physics = [sfclay_mapping.get(idx,'UNKNOWN') for idx in sfclay_idx_list]
+
 
