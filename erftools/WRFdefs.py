@@ -3,6 +3,7 @@ from datetime import datetime
 class time_control(object):
     def __init__(self,nmldict):
         self.nml = nmldict
+        self.restart_interval = self.nml['restart_interval'] # [min]
         self.parse_datetime_range()
 
     def __str__(self):

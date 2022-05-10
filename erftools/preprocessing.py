@@ -48,5 +48,8 @@ class WRFnamelist(object):
             in_box_hi = [in_box_lo[0] + self.domains.e_we[idom]-1, in_box_lo[1] + self.domains.e_sn[idom]-1]
             self.erf_input[f'amr.box{idom:d}.in_box_lo'] = in_box_lo
             self.erf_input[f'amr.box{idom:d}.in_box_hi'] = in_box_hi
+
+        restart_period = self.time_control.restart_interval * 60.0 # [s]
+        self.erf_input['amr.check_int'] = int(restart_period / dt[0])
         
         
