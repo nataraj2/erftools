@@ -24,9 +24,11 @@ class WRFnamelist(object):
         tdelta = self.time_control.end_datetime - self.time_control.start_datetime
         self.erf_input['stop_time'] = tdelta.total_seconds()
 
-        self.erf_input['amr.n_cell'] = [self.domains.e_we[0], self.domains.e_sn[0], self.domains.e_vert[0]]
+        # note: number vert pts is staggered
+        self.erf_input['amr.n_cell'] = [self.domains.e_we[0], self.domains.e_sn[0], self.domains.e_vert[0]-1]
 
+        # TODO: verify that refined regions will take finer time steps
         dt = np.array(self.domains.parent_time_step_ratio) * self.domains.time_step
-        self.erf_input['erf.fixed_dt'] = dt[0] # TODO: verify that refined regions have finer time steps
+        self.erf_input['erf.fixed_dt'] = dt[0]
         
         

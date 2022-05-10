@@ -40,11 +40,10 @@ class domains(object):
 
     def parse_grid(self):
         self.max_dom = self.legacy['max_dom']
-        # UNstaggered grid points == cells
         # - assume s_we == s_sn == s_vert == [1, 1, ...]
-        self.e_we = self.legacy['e_we'][:self.max_dom] # west--east
-        self.e_sn = self.legacy['e_sn'][:self.max_dom] # south--north
-        self.e_vert = self.legacy['e_vert'][:self.max_dom] # bottom--top
+        self.e_we = self.legacy['e_we'][:self.max_dom] # west--east, unstaggered
+        self.e_sn = self.legacy['e_sn'][:self.max_dom] # south--north, unstaggered
+        self.e_vert = self.legacy['e_vert'][:self.max_dom] # bottom--top, STAGGERED
         self.dx = self.legacy['dx'][:self.max_dom]
         self.dy = self.legacy['dy'][:self.max_dom]
         self.i_parent_start = self.legacy['i_parent_start'][:self.max_dom]
