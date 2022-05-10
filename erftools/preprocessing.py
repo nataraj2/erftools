@@ -1,11 +1,13 @@
 import numpy as np
 import f90nml
 
-from .WRFdefs import time_control, domains, physics
+from .wrf_namelist_input import time_control, domains, physics
 from .inputs import ERFinput
 
 class WRFnamelist(object):
-    """Class to parse WRF inputs and convert to ERF inputs"""
+    """Class to parse inputs from a WRF namelist.input file and convert to
+    inputs for ERF
+    """
 
     def __init__(self,nmlpath):
         with open(nmlpath,'r') as f:
@@ -29,10 +31,11 @@ class WRFnamelist(object):
         # note: number vert pts is staggered
         # TODO: add vertical stretching
         n_cell = np.array([self.domains.e_we[0], self.domains.e_sn[0], self.domains.e_vert[0]-1])
-        heights = self.domains.get_heights()
         #print('destaggered (cell center) heights:',heights)
+        #heights = self.domains.get_heights()
+        ztop_est = 287.0 * 300.0 / 9.81 * np.log(1e5/self.domains.p_top_requested)
         self.erf_input['geometry.prob_extent'] = n_cell * np.array([self.domains.dx[0], self.domains.dy[0], np.nan])
-        self.erf_input['geometry.prob_extent'][2] = heights[-1]
+        self.erf_input['geometry.prob_extent'][2] = ztop_est
         self.erf_input['amr.n_cell'] = n_cell
 
         # TODO: verify that refined regions will take finer time steps

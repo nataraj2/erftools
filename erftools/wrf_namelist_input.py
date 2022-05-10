@@ -1,3 +1,6 @@
+"""
+Processing for each namelist within a WRF namelist.input file
+"""
 from datetime import datetime
 import xarray as xr
 
