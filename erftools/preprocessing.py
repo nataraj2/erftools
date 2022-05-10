@@ -32,12 +32,12 @@ class WRFInputDeck(object):
     def calculate_inputs(self):
         """Scrape inputs for ERF from a WRF namelist.input file
 
-        Notes:
-        * This does not import the WRF height levels (geopotential height); to
-          get those coordinates, call get_heights() to extract from WRF initial
-          conditions (`wrfinput_d01` from real.exe)
-        * This does not import z0 (surface roughness) from the reanalysis data;
-          to get that, call get_roughness_map()
+        Note that the namelist does not provide the following input information
+        * WRF geopotential height levels
+        * surface temperature map
+        * surface roughness map
+        To get these values, call `process_initial_conditions()` to extract
+        them from `wrfinput_d01` (output from real.exe).
         """
         tdelta = self.time_control.end_datetime - self.time_control.start_datetime
         self.erf_input['stop_time'] = tdelta.total_seconds()
@@ -75,9 +75,9 @@ class WRFInputDeck(object):
         
         return self.erf_input
         
-    def get_heights(self):
+    def process_initial_conditions(self,init_input='wrfinput_d01',landuse_table_path=None):
         # Note: This calculates the heights for the outer WRF domain only
-        wrfinp = xr.open_dataset('wrfinput_d01')
+        wrfinp = xr.open_dataset(init_input)
         ph = wrfinp['PH'] # perturbation geopotential
         phb = wrfinp['PHB'] # base-state geopotential
         hgt = wrfinp['HGT'] # terrain height
@@ -86,11 +86,25 @@ class WRFInputDeck(object):
         geo = geo/9.81 - hgt
         geo = geo.isel(Time=0).mean(['south_north','west_east']).values
         self.heights = (geo[1:] + geo[:-1]) / 2 # destaggered
-        # TODO: update erf_input with specified height levels
-        return self.heights
+        self.erf_input['erf.z_levels'] = self.heights
 
-    def get_roughness_map(self,landuse_table_path):
-        wrfinp = xr.open_dataset('wrfinput_d01')
+        # Get Coriolis parameters
+        self.erf_input['erf.latitude'] = wrfinp.attrs['CEN_LAT']
+        period = 4*np.pi / wrfinp['F'] * np.sin(np.radians(wrfinp.coords['XLAT'])) # F: "Coriolis sine latitude term"
+        self.erf_input['erf.rotational_time_period'] = float(period.mean())
+
+        # Get surface temperature map
+        Tsurf = wrfinp['TSK'].isel(Time=0) # "surface skin temperature"
+        # TODO: need to convert to surface field for ERF
+        # temporarily use a scalar value
+        self.erf_input['erf.most.surf_temp'] = float(Tsurf.mean())
+
+        # Get roughness map from land use information
+        if landuse_table_path is None:
+            print('Need to specify `landuse_table_path` from your WRF installation'\
+                  'land-use indices to z0')
+            self.erf_input['erf.most.z0'] = 'UNDEFINED'
+            return
         LUtype =  wrfinp.attrs['MMINLU']
         alltables = LandUseTable(landuse_table_path)
         tab = alltables[LUtype]
@@ -117,6 +131,5 @@ class WRFInputDeck(object):
         # temporarily use a scalar value
         z0mean = float(z0.mean())
         self.erf_input['erf.most.z0'] = z0mean
-        return z0mean
         
 
