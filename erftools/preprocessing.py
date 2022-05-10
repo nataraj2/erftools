@@ -35,5 +35,18 @@ class WRFnamelist(object):
         # TODO: verify that refined regions will take finer time steps
         dt = np.array(self.domains.parent_time_step_ratio) * self.domains.time_step
         self.erf_input['erf.fixed_dt'] = dt[0]
+
+        self.erf_input['amr.max_level'] = self.domains.max_dom - 1 # zero-based indexing
+        grid_ratio = self.domains.parent_grid_ratio[1] # TODO: assume all nests have same ratio
+        self.erf_input['amr.ref_ratio_vect'] = [grid_ratio, grid_ratio, 1]
+        refine_names = ' '.join([f'box{idom:d}' for idom in range(1,self.domains.max_dom)])
+        self.erf_input['amr.refinement_indicators'] = refine_names
+        for idom in range(1,self.domains.max_dom):
+            # zero-based indexing -- TODO: verify that these are relative to the parent box, not level0
+            in_box_lo = [self.domains.i_parent_start[idom]-1     , self.domains.j_parent_start[idom]-1     ]
+            # TODO: verify that these are incusive bounds
+            in_box_hi = [in_box_lo[0] + self.domains.e_we[idom]-1, in_box_lo[1] + self.domains.e_sn[idom]-1]
+            self.erf_input[f'amr.box{idom:d}.in_box_lo'] = in_box_lo
+            self.erf_input[f'amr.box{idom:d}.in_box_hi'] = in_box_hi
         
         

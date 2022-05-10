@@ -49,10 +49,12 @@ class domains(object):
         self.p_top_requested = self.nml['p_top_requested']
         self.i_parent_start = self.nml['i_parent_start'][:self.max_dom]
         self.j_parent_start = self.nml['j_parent_start'][:self.max_dom]
-        parent_grid_ratio = self.nml['parent_grid_ratio'][:self.max_dom]
+        self.parent_grid_ratio = self.nml['parent_grid_ratio'][:self.max_dom]
         for dom in range(1,self.max_dom):
-            assert (self.dx[dom-1]/self.dx[dom] == parent_grid_ratio[dom])
-            assert (self.dy[dom-1]/self.dy[dom] == parent_grid_ratio[dom])
+            assert (self.dx[dom-1]/self.dx[dom] == self.parent_grid_ratio[dom])
+            assert (self.dy[dom-1]/self.dy[dom] == self.parent_grid_ratio[dom])
+            assert self.i_parent_start[0] == 1
+            assert self.j_parent_start[0] == 1
 
     def parse_time_integration(self):
         self.time_step = self.nml['time_step'] # seconds
