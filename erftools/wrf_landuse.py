@@ -28,6 +28,9 @@ conversions = {
 class LandUseTable(dict):
     """Container for land-use information from WRF"""
 
+    summer_start_day = 105
+    winter_start_day = 289
+
     def __init__(self,fpath='LANDUSE.TBL'):
         """Read specified LANDUSE.TBL file"""
         with open(fpath,'r') as f:
@@ -72,7 +75,7 @@ class LandUseTable(dict):
         else:
             # return dataframe with multiindex
             for season in newdict.keys():
-                newdict[season]['season'] = season
+                newdict[season]['season'] = season.lower()
             df = pd.concat(newdict.values())
             df = df.set_index('season', append=True)
             return df.sort_index()

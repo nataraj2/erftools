@@ -1,8 +1,10 @@
 import numpy as np
+import pandas as pd
 import xarray as xr
 import f90nml
 
 from .wrf_namelist_input import time_control, domains, physics
+from .wrf_landuse import LandUseTable
 from .inputs import ERFInputFile
 
 class WRFInputDeck(object):
@@ -87,7 +89,34 @@ class WRFInputDeck(object):
         # TODO: update erf_input with specified height levels
         return self.heights
 
-    def get_roughness_map(self):
+    def get_roughness_map(self,landuse_table_path):
         wrfinp = xr.open_dataset('wrfinput_d01')
+        LUtype =  wrfinp.attrs['MMINLU']
+        alltables = LandUseTable(landuse_table_path)
+        tab = alltables[LUtype]
+        if isinstance(tab.index, pd.MultiIndex):
+            assert tab.index.levels[1].name == 'season'
+            startdate = self.time_control.start_datetime
+            dayofyear = startdate.timetuple().tm_yday
+            is_summer = (dayofyear >= LandUseTable.summer_start_day) & (dayofyear < LandUseTable.winter_start_day)
+            #print(startdate,'--> day',dayofyear,'is summer?',is_summer)
+            if is_summer:
+                tab = tab.xs('summer',level='season')
+            else:
+                tab = tab.xs('winter',level='season')
+        z0dict = tab['roughness_length'].to_dict()
+        def mapfun(idx):
+            return z0dict[idx]
+        LU = wrfinp['LU_INDEX'].isel(Time=0).astype(int)
+        z0 = xr.apply_ufunc(np.vectorize(mapfun), LU)
+        print('Distribution of roughness heights')
+        print('z0\tcount')
+        for roughval in np.unique(z0):
+            print(f'{roughval:g}\t{np.count_nonzero(z0==roughval)}')
+        # TODO: need to convert to surface field for ERF
+        # temporarily use a scalar value
+        z0mean = float(z0.mean())
+        self.erf_input['erf.most.z0'] = z0mean
+        return z0mean
         
 
