@@ -35,10 +35,10 @@ class domains(object):
     def __str__(self):
         s = 'WRF `domains` parameters\n'
         for dom in range(self.max_dom):
-            s += f'  domain d{dom+1:02d}:' \
+            s += f'  d{dom+1:02d}:' \
                  f' [(1,{self.e_we[dom]:d}),(1,{self.e_sn[dom]:d}),(1,{self.e_vert[dom]:d})]' \
                  f' ds=[{self.dx[dom]},{self.dy[dom]}]\n'
-        return s
+        return s.rstrip()
 
     def parse_time_integration(self):
         self.time_step = self.nml['time_step'] # seconds
@@ -71,4 +71,46 @@ class domains(object):
         geo = geo/9.81 - hgt
         geo = geo.isel(Time=0).mean(['south_north','west_east']).values
         return (geo[1:] + geo[:-1]) / 2 # destaggered
+
+
+pbl_mapping = {
+    0:  'None',
+    1:  'YSU',
+    2:  'MYJ',
+    3:  'GFS',
+    4:  'QNSE',
+    5:  'MYNN2.5',
+    6:  'MYNN3',
+    7:  'ACM2',
+    8:  'BouLac',
+    9:  'UW',
+    10: 'TEMF',
+    11: 'Shin-Hong',
+    12: 'GBM',
+    99: 'MRF',
+}
+
+sfclay_mapping = {
+    1: 'MOST', # w/ Carslon-Boland viscous sub-layer and standard similarity function lookup
+    2: 'Eta', # Janjic Eta similarity, w/ Zilitinkevich thermal roughness length, standard similarity function lookup
+    5: 'MYNN',
+}
+
+
+class physics(object):
+
+    def __init__(self,nmldict):
+        self.nml = nmldict
+        self.parse_all()
+
+    def __str__(self):
+        s = 'WRF `physics` parameters\n'
+        for dom in range(len(self.bl_pbl_physics)):
+            s+=f'   d0{dom+1:d}: {self.bl_pbl_physics[dom]} PBL, {self.sf_sfclay_physics[dom]} surface layer\n'
+            #s+=f'        {self.sf_sfclay_physics[dom]} surface layer\n'
+        return s.rstrip()
+
+    def parse_all(self):
+        self.bl_pbl_physics = [pbl_mapping.get(idx,'UNKNOWN') for idx in self.nml['bl_pbl_physics']]
+        self.sf_sfclay_physics = [sfclay_mapping.get(idx,'UNKNOWN') for idx in self.nml['sf_sfclay_physics']]
 

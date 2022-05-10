@@ -1,7 +1,7 @@
 import numpy as np
 import f90nml
 
-from .WRFdefs import time_control, domains#, physics
+from .WRFdefs import time_control, domains, physics
 from .inputs import ERFinput
 
 class WRFnamelist(object):
@@ -12,12 +12,14 @@ class WRFnamelist(object):
             self.nml = f90nml.read(f)
         self.time_control = time_control(self.nml['time_control'])
         self.domains = domains(self.nml['domains'])
+        self.physics = physics(self.nml['physics'])
         self.erf_input = ERFinput()
         self.calculate_inputs()
 
     def __str__(self):
         s = str(self.time_control) + '\n'
         s+= str(self.domains)+ '\n'
+        s+= str(self.physics)+ '\n'
         return s
 
     def calculate_inputs(self):
@@ -52,5 +54,8 @@ class WRFnamelist(object):
 
         restart_period = self.time_control.restart_interval * 60.0 # [s]
         self.erf_input['amr.check_int'] = int(restart_period / dt[0])
+
+        # TODO: specify PBL scheme per level
+        self.erf_input['erf.pbl_type'] = self.physics.bl_pbl_physics[0]
         
         
