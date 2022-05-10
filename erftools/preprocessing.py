@@ -27,9 +27,10 @@ class WRFnamelist(object):
         # note: number vert pts is staggered
         # TODO: add vertical stretching
         n_cell = np.array([self.domains.e_we[0], self.domains.e_sn[0], self.domains.e_vert[0]-1])
+        heights = self.domains.get_heights()
+        print('destaggered (cell center) heights:',heights)
         self.erf_input['geometry.prob_extent'] = n_cell * np.array([self.domains.dx[0], self.domains.dy[0], np.nan])
-        # see https://github.com/a2e-mmc/mmctools/blob/dev/mmctools/wrf/preprocessing.py#L3336
-        self.erf_input['geometry.prob_extent'][2] = 287.*300./9.81 * np.log(1e5/self.domains.p_top_requested)
+        self.erf_input['geometry.prob_extent'][2] = heights[2]
         self.erf_input['amr.n_cell'] = n_cell
 
         # TODO: verify that refined regions will take finer time steps

@@ -1,4 +1,5 @@
 from datetime import datetime
+import xarray as xr
 
 class time_control(object):
     def __init__(self,nmldict):
@@ -28,8 +29,8 @@ class time_control(object):
 class domains(object):
     def __init__(self,nmldict):
         self.nml = nmldict
-        self.parse_grid()
         self.parse_time_integration()
+        self.parse_grid()
 
     def __str__(self):
         s = 'WRF `domains` parameters\n'
@@ -38,6 +39,10 @@ class domains(object):
                  f' [(1,{self.e_we[dom]:d}),(1,{self.e_sn[dom]:d}),(1,{self.e_vert[dom]:d})]' \
                  f' ds=[{self.dx[dom]},{self.dy[dom]}]\n'
         return s
+
+    def parse_time_integration(self):
+        self.time_step = self.nml['time_step'] # seconds
+        self.parent_time_step_ratio = self.nml['parent_time_step_ratio']
 
     def parse_grid(self):
         self.max_dom = self.nml['max_dom']
@@ -57,8 +62,13 @@ class domains(object):
             assert self.i_parent_start[0] == 1
             assert self.j_parent_start[0] == 1
 
-    def parse_time_integration(self):
-        self.time_step = self.nml['time_step'] # seconds
-        self.parent_time_step_ratio = self.nml['parent_time_step_ratio']
-
+    def get_heights(self):
+        wrfinp = xr.open_dataset('wrfinput_d01')
+        ph = wrfinp['PH'] # perturbation geopotential
+        phb = wrfinp['PHB'] # base-state geopotential
+        hgt = wrfinp['HGT'] # terrain height
+        geo = ph + phb # geopotential, dims=(Time: 1, bottom_top_stag, south_north, west_east)
+        geo = geo/9.81 - hgt
+        geo = geo.isel(Time=0).mean(['south_north','west_east']).values
+        return (geo[1:] + geo[:-1]) / 2 # destaggered
 
