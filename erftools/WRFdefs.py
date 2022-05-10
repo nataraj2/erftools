@@ -46,6 +46,7 @@ class domains(object):
         self.e_vert = self.legacy['e_vert'][:self.max_dom] # bottom--top, STAGGERED
         self.dx = self.legacy['dx'][:self.max_dom]
         self.dy = self.legacy['dy'][:self.max_dom]
+        self.p_top_requested = self.legacy['p_top_requested']
         self.i_parent_start = self.legacy['i_parent_start'][:self.max_dom]
         self.j_parent_start = self.legacy['j_parent_start'][:self.max_dom]
         parent_grid_ratio = self.legacy['parent_grid_ratio'][:self.max_dom]

@@ -25,7 +25,12 @@ class WRFnamelist(object):
         self.erf_input['stop_time'] = tdelta.total_seconds()
 
         # note: number vert pts is staggered
-        self.erf_input['amr.n_cell'] = [self.domains.e_we[0], self.domains.e_sn[0], self.domains.e_vert[0]-1]
+        # TODO: add vertical stretching
+        n_cell = np.array([self.domains.e_we[0], self.domains.e_sn[0], self.domains.e_vert[0]-1])
+        self.erf_input['geometry.prob_extent'] = n_cell * np.array([self.domains.dx[0], self.domains.dy[0], np.nan])
+        # see https://github.com/a2e-mmc/mmctools/blob/dev/mmctools/wrf/preprocessing.py#L3336
+        self.erf_input['geometry.prob_extent'][2] = 287.*300./9.81 * np.log(1e5/self.domains.p_top_requested)
+        self.erf_input['amr.n_cell'] = n_cell
 
         # TODO: verify that refined regions will take finer time steps
         dt = np.array(self.domains.parent_time_step_ratio) * self.domains.time_step
