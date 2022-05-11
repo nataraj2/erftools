@@ -112,6 +112,7 @@ erf.nc_bdy_file  = "wrfbdy_d01"  # TODO: provide one boundary file per level
 
 # PHYSICS OPTIONS
 erf.les_type = "None"
+erf.pbl_type = "{self.store['erf.pbl_type']}" # TODO: specify for each level
 erf.abl_driver_type = "None"
 erf.use_gravity = true
 erf.use_coriolis = true
