@@ -60,10 +60,15 @@ class WRFInputDeck(object):
         refine_names = ' '.join([f'box{idom:d}' for idom in range(1,self.domains.max_dom)])
         self.erf_input['amr.refinement_indicators'] = refine_names
         for idom in range(1,self.domains.max_dom):
-            # zero-based indexing -- TODO: verify that these are relative to the parent box, not level0
-            in_box_lo = [self.domains.i_parent_start[idom]-1     , self.domains.j_parent_start[idom]-1     ]
-            # TODO: verify that these are incusive bounds
-            in_box_hi = [in_box_lo[0] + self.domains.e_we[idom]-1, in_box_lo[1] + self.domains.e_sn[idom]-1]
+            parent_ds  = np.array([  self.domains.dx[idom-1],   self.domains.dy[idom-1]], dtype=float)
+            child_ds   = np.array([  self.domains.dx[idom  ],   self.domains.dy[idom  ]], dtype=float)
+            parent_ext = np.array([self.domains.e_we[idom-1], self.domains.e_sn[idom-1]]) * parent_ds
+            child_ext  = np.array([self.domains.e_we[idom  ], self.domains.e_sn[idom  ]]) * child_ds
+            lo_idx = np.array([self.domains.i_parent_start[idom]-1, self.domains.j_parent_start[idom]-1])
+            in_box_lo = lo_idx * parent_ds
+            in_box_hi = in_box_lo + child_ext
+            assert (in_box_hi[0] <= parent_ext[0])
+            assert (in_box_hi[1] <= parent_ext[1])
             self.erf_input[f'amr.box{idom:d}.in_box_lo'] = in_box_lo
             self.erf_input[f'amr.box{idom:d}.in_box_hi'] = in_box_hi
 
