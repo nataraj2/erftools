@@ -3,7 +3,7 @@ import pandas as pd
 import xarray as xr
 import f90nml
 
-from .wrf_namelist_input import TimeControl, Domains, Physics
+from .wrf_namelist_input import TimeControl, Domains, Physics, Dynamics
 from .wrf_landuse import LandUseTable
 from .inputs import ERFInputFile
 
@@ -20,6 +20,7 @@ class WRFInputDeck(object):
         self.time_control = TimeControl(self.nml['time_control'])
         self.domains = Domains(self.nml['domains'])
         self.physics = Physics(self.nml['physics'])
+        self.dynamics = Dynamics(self.nml['dynamics'])
         self.erf_input = ERFInputFile()
         self.calculate_inputs()
 
@@ -78,7 +79,32 @@ class WRFInputDeck(object):
 
         # TODO: specify PBL scheme per level
         self.erf_input['erf.pbl_type'] = self.physics.bl_pbl_physics[0]
+        if self.physics.bl_pbl_physics[0] != 'none':
+            assert (not any([diff_opt.startswith('3D') for diff_opt in self.dynamics.km_opt])), \
+                    'Incompatible PBL scheme and diffusion options specified'
+
+        if any([opt != 'constant' for opt in self.dynamics.km_opt]):
+            print('NOTE: Variable diffusion not implemented in ERF')
+            self.erf_input['erf.molec_diff_type'] = 'Constant' # default
+            self.erf_input['erf.rho0_trans'] = 1.0
+            self.erf_input['erf.dynamicViscosity'] = 0.0
+            self.erf_input['erf.alpha_T'] = 0.0
+            self.erf_input['erf.alpha_C'] = 0.0
+        else:
+            if any([kh != kv for kh,kv in zip(self.dynamics.khdif, self.dynamics.kvdif)]):
+                print('NOTE: horizontal and vertical diffusion coefficients assumed equal')
+            self.erf_input['erf.molec_diff_type'] = 'ConstantAlpha' # default
+            self.erf_input['erf.rho0_trans'] = 1.0
+            self.erf_input['erf.dynamicViscosity'] = self.dynamics.khdif[0]
+            self.erf_input['erf.alpha_T'] = self.dynamics.khdif[0]
+            self.erf_input['erf.alpha_C'] = self.dynamics.khdif[0]
+        if any([opt != 0 for opt in self.dynamics.diff_6th_opt]):
+            print('NOTE: 6th-order horizontal hyperdiffusion not implemented in ERF')
         
+        # TODO: turn on Rayleigh damping, set tau
+        if self.dynamics.damp_opt != 'none':
+            print(f'NOTE: Upper level damping specified ({self.dynamics.damp_opt}) but not implemented in ERF')
+
         return self.erf_input
         
     def process_initial_conditions(self,init_input='wrfinput_d01',landuse_table_path=None):

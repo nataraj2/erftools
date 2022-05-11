@@ -129,3 +129,52 @@ class Physics(object):
         self.num_land_cat = self.nml['num_land_cat']
 
 
+diff_opt_mapping = {
+    1: 'simple',
+    2: 'full',
+}
+km_opt_mapping = {
+    1: 'constant',
+    2: '3D TKE',
+    3: '3D deformation',
+    4: '2D deformation',
+}
+damp_opt_mapping = {
+    0: 'none',
+    1: 'increased diffusion',
+    2: 'Rayleigh relaxation',
+    3: 'Rayleigh implicit gravity-wave damping',
+}
+
+class Dynamics(object):
+    """&dynamics namelist"""
+
+    def __init__(self,nmldict):
+        self.nml = nmldict
+        self.parse_diffusion()
+        self.parse_damping()
+
+    def __str__(self):
+        s = 'WRF `dynamics` parameters\n'
+        for dom in range(len(self.diff_opt)):
+            s+=f'  d0{dom+1:d}: diffusion={self.diff_opt[dom]}, K option={self.km_opt[dom]}\n'
+        s+=f'  upper damping: {self.damp_opt}\n'
+        s+=f'  vertical damping: {self.w_damping}\n'
+        return s.rstrip()
+
+    def parse_diffusion(self):
+        diff_opt_list = self.nml['diff_opt']
+        km_opt_list = self.nml['km_opt']
+        self.diff_opt = [diff_opt_mapping.get(diff_opt_list[dom], 'UNKNOWN') for dom in range(len(diff_opt_list))]
+        self.km_opt = [km_opt_mapping.get(km_opt_list[dom], 'UNKNOWN') for dom in range(len(diff_opt_list))]
+        self.khdif = self.nml['khdif']
+        self.kvdif = self.nml['kvdif']
+        self.diff_6th_opt = self.nml['diff_6th_opt']
+        self.diff_6th_factor = self.nml['diff_6th_factor']
+
+    def parse_damping(self):
+        self.damp_opt = damp_opt_mapping[self.nml['damp_opt']]
+        self.w_damping = bool(self.nml['w_damping'])
+        self.zdamp = self.nml['zdamp']
+        self.dampcoef = self.nml['dampcoef']
+

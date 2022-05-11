@@ -118,8 +118,12 @@ erf.use_gravity = true
 erf.use_coriolis = true
 erf.latitutde = {self.store['erf.latitude']}
 erf.rotational_time_period = {self.store['erf.rotational_time_period']}
-erf.alpha_T = 0.0
-erf.alpha_C = 0.0
+
+erf.molec_diff_type = "{self.store['erf.molec_diff_type']}"
+erf.rho0_trans = {self.store['erf.rho0_trans']}  # i.e., dynamic == kinematic coefficients
+erf.dynamicViscosity = {self.store['erf.dynamicViscosity']}  # TODO: specify for each level
+erf.alpha_T = {self.store['erf.alpha_T']}  # TODO: specify for each level
+erf.alpha_C = {self.store['erf.alpha_C']}  # TODO: specify for each level
 
 # SOLVER CHOICES
 erf.spatial_order = 2
