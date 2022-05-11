@@ -25,8 +25,9 @@ class WRFInputDeck(object):
 
     def __str__(self):
         s = str(self.time_control) + '\n'
-        s+= str(self.domains)+ '\n'
-        s+= str(self.physics)+ '\n'
+        s+= str(self.domains) + '\n'
+        s+= str(self.physics) + '\n'
+        s+= str(self.dynamics) + '\n'
         return s
 
     def calculate_inputs(self):

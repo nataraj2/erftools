@@ -70,7 +70,7 @@ class Domains(object):
 
 
 pbl_mapping = {
-    0:  'None',
+    0:  'none',
     1:  'YSU',
     2:  'MYJ',
     3:  'GFS',
@@ -85,13 +85,11 @@ pbl_mapping = {
     12: 'GBM',
     99: 'MRF',
 }
-
 sfclay_mapping = {
     1: 'MOST', # w/ Carslon-Boland viscous sub-layer and standard similarity function lookup
     2: 'Eta', # Janjic Eta similarity, w/ Zilitinkevich thermal roughness length, standard similarity function lookup
     5: 'MYNN',
 }
-
 valid_sfclay = {
     # for each PBL scheme
     1:  [1],
@@ -108,7 +106,7 @@ valid_sfclay = {
 
 
 class Physics(object):
-    """&domains namelist"""
+    """&physics namelist"""
 
     def __init__(self,nmldict):
         self.nml = nmldict
@@ -117,8 +115,7 @@ class Physics(object):
     def __str__(self):
         s = 'WRF `physics` parameters\n'
         for dom in range(len(self.bl_pbl_physics)):
-            s+=f'   d0{dom+1:d}: {self.bl_pbl_physics[dom]} PBL, {self.sf_sfclay_physics[dom]} surface layer\n'
-            #s+=f'        {self.sf_sfclay_physics[dom]} surface layer\n'
+            s+=f'  d0{dom+1:d}: {self.bl_pbl_physics[dom]} PBL, {self.sf_sfclay_physics[dom]} surface layer\n'
         return s.rstrip()
 
     def parse_all(self):
