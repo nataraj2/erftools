@@ -105,6 +105,11 @@ erf.most.z0 = {self.store['erf.most.z0']}  # TODO: use roughness map
 erf.most.zref = 200.0
 erf.most.surf_temp = {self.store['erf.most.surf_temp']}  # TODO: use surface temperature map
 
+# INITIAL CONDITIONS
+erf.init_type    = "real"
+erf.nc_init_file = "wrfinput_d01"
+erf.nc_bdy_file  = "wrfbdy_d01"  # TODO: provide one boundary file per level
+
 # SOLVER CHOICES
 erf.alpha_T = 0.0
 erf.alpha_C = 0.0
