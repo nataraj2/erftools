@@ -3,7 +3,7 @@ import pandas as pd
 import xarray as xr
 import f90nml
 
-from .wrf_namelist_input import time_control, domains, physics
+from .wrf_namelist_input import TimeControl, Domains, Physics
 from .wrf_landuse import LandUseTable
 from .inputs import ERFInputFile
 
@@ -17,9 +17,9 @@ class WRFInputDeck(object):
     def __init__(self,nmlpath):
         with open(nmlpath,'r') as f:
             self.nml = f90nml.read(f)
-        self.time_control = time_control(self.nml['time_control'])
-        self.domains = domains(self.nml['domains'])
-        self.physics = physics(self.nml['physics'])
+        self.time_control = TimeControl(self.nml['time_control'])
+        self.domains = Domains(self.nml['domains'])
+        self.physics = Physics(self.nml['physics'])
         self.erf_input = ERFInputFile()
         self.calculate_inputs()
 

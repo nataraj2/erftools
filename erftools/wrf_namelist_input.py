@@ -3,7 +3,9 @@ Processing for each namelist within a WRF namelist.input file
 """
 from datetime import datetime
 
-class time_control(object):
+class TimeControl(object):
+    """&time_control namelist"""
+
     def __init__(self,nmldict):
         self.nml = nmldict
         self.restart_interval = self.nml['restart_interval'] # [min]
@@ -28,7 +30,9 @@ class time_control(object):
         self.end_datetime = datetime(end_year, end_month, end_day, end_hour)
         
     
-class domains(object):
+class Domains(object):
+    """&domains namelist"""
+
     def __init__(self,nmldict):
         self.nml = nmldict
         self.parse_time_integration()
@@ -103,7 +107,8 @@ valid_sfclay = {
 }
 
 
-class physics(object):
+class Physics(object):
+    """&domains namelist"""
 
     def __init__(self,nmldict):
         self.nml = nmldict

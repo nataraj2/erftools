@@ -80,7 +80,7 @@ fabarray.mfiter_tile_size = 1024 1024 1024
 
 # PROBLEM SIZE & GEOMETRY
 amr.n_cell           = {' '.join([str(v) for v in self.store['amr.n_cell']])}
-geometry.prob_extent = {' '.join([str(v) for v in self.store['geometry.prob_extent']])}
+geometry.prob_extent = {' '.join([str(v) for v in self.store['geometry.prob_extent']])} # zmax estimated from WRF `p_top_requested`
 geometry.is_periodic = 0 0 0
 
 erf.z_levels = {' '.join([str(v) for v in self.store['erf.z_levels']])}  # TODO: need to implement this input
@@ -88,7 +88,7 @@ erf.z_levels = {' '.join([str(v) for v in self.store['erf.z_levels']])}  # TODO:
 # TIME STEP CONTROL
 max_step           = 0
 stop_time          = {self.store['stop_time']}
-erf.fixed_dt       = {self.store['erf.fixed_dt']}  # fixed tiem step depending on grid resolution
+erf.fixed_dt       = {self.store['erf.fixed_dt']}  # fixed time step depending on grid resolution
 erf.use_native_mri = 1
 
 # REFINEMENT / REGRIDDING
@@ -110,16 +110,18 @@ erf.init_type    = "real"
 erf.nc_init_file = "wrfinput_d01"
 erf.nc_bdy_file  = "wrfbdy_d01"  # TODO: provide one boundary file per level
 
-# SOLVER CHOICES
-erf.alpha_T = 0.0
-erf.alpha_C = 0.0
-erf.use_gravity = true
-erf.spatial_order = 2
+# PHYSICS OPTIONS
 erf.les_type = "None"
+erf.abl_driver_type = "None"
+erf.use_gravity = true
 erf.use_coriolis = true
 erf.latitutde = {self.store['erf.latitude']}
 erf.rotational_time_period = {self.store['erf.rotational_time_period']}
-erf.abl_driver_type = "None"
+erf.alpha_T = 0.0
+erf.alpha_C = 0.0
+
+# SOLVER CHOICES
+erf.spatial_order = 2
 
 # DIAGNOSTICS & VERBOSITY
 erf.sum_interval = 1  # timesteps between computing mass
@@ -127,4 +129,6 @@ erf.v            = 1  # verbosity in ERF.cpp
 amr.v            = 1  # verbosity in Amr.cpp
 
 """)
+        if fpath is not None:
+            print('Wrote',fpath)
             
