@@ -22,7 +22,7 @@ class WRFInputDeck(object):
         self.physics = Physics(self.nml['physics'])
         self.dynamics = Dynamics(self.nml['dynamics'])
         self.erf_input = ERFInputFile()
-        self.calculate_inputs()
+        self.generate_inputs()
 
     def __str__(self):
         s = str(self.time_control) + '\n'
