@@ -44,11 +44,11 @@ class WRFInputDeck(object):
         tdelta = self.time_control.end_datetime - self.time_control.start_datetime
         self.erf_input['stop_time'] = tdelta.total_seconds()
 
-        # note: number vert pts is staggered
+        # note: ending index (1-based indexing) == number of _staggered_ pts
         # TODO: add vertical stretching
-        n_cell = np.array([self.domains.e_we[0], self.domains.e_sn[0], self.domains.e_vert[0]-1])
-        ztop_est = 287.0 * 300.0 / 9.81 * np.log(1e5/self.domains.p_top_requested)
+        n_cell = np.array([self.domains.e_we[0], self.domains.e_sn[0], self.domains.e_vert[0]]) - 1
         self.erf_input['geometry.prob_extent'] = n_cell * np.array([self.domains.dx[0], self.domains.dy[0], np.nan])
+        ztop_est = 287.0 * 300.0 / 9.81 * np.log(1e5/self.domains.p_top_requested)
         self.erf_input['geometry.prob_extent'][2] = ztop_est
         self.erf_input['amr.n_cell'] = n_cell
 
