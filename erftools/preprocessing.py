@@ -31,7 +31,7 @@ class WRFInputDeck(object):
         s+= str(self.dynamics) + '\n'
         return s
 
-    def calculate_inputs(self):
+    def generate_inputs(self):
         """Scrape inputs for ERF from a WRF namelist.input file
 
         Note that the namelist does not provide the following input information
