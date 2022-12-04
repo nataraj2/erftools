@@ -13,8 +13,14 @@ class WRFNamelist(object):
         assert isinstance(val, (int, float, bool))
         return val
 
-    def getarrayvar(self,varname):
-        arr = self.nml[varname]
+    def getarrayvar(self,varname,optional=False,default=None):
+        try:
+            arr = self.nml[varname]
+        except KeyError:
+            if optional:
+                return default
+            else:
+                raise KeyError(varname)
         if not hasattr(arr,'__iter__'):
             arr = [arr]
         for i,val in enumerate(arr):
@@ -67,10 +73,13 @@ class Domains(WRFNamelist):
 
     def parse_time_integration(self):
         self.time_step = self.getvar('time_step') # seconds
-        self.parent_time_step_ratio = self.getarrayvar('parent_time_step_ratio')
+        self.parent_time_step_ratio = self.getarrayvar('parent_time_step_ratio',
+                                                       optional=True)
 
     def parse_grid(self):
         self.max_dom = self.getvar('max_dom')
+        if self.parent_time_step_ratio is None:
+            assert self.max_dom == 1
         # - assume s_we == s_sn == s_vert == [1, 1, ...]
         self.e_we = self.getarrayvar('e_we')[:self.max_dom] # west--east, unstaggered
         self.e_sn = self.getarrayvar('e_sn')[:self.max_dom] # south--north, unstaggered
@@ -78,9 +87,13 @@ class Domains(WRFNamelist):
         self.dx = self.getarrayvar('dx')[:self.max_dom]
         self.dy = self.getarrayvar('dy')[:self.max_dom]
         self.p_top_requested = self.getvar('p_top_requested')
-        self.i_parent_start = self.getarrayvar('i_parent_start')[:self.max_dom]
-        self.j_parent_start = self.getarrayvar('j_parent_start')[:self.max_dom]
-        self.parent_grid_ratio = self.getarrayvar('parent_grid_ratio')[:self.max_dom]
+        self.i_parent_start = self.getarrayvar('i_parent_start', optional=True)
+        self.j_parent_start = self.getarrayvar('j_parent_start', optional=True)
+        self.parent_grid_ratio = self.getarrayvar('parent_grid_ratio'. optional=True)
+        if self.max_dom > 1:
+            self.i_parent_start = self.i_parent_start[:self.max_dom]
+            self.j_parent_start = self.j_parent_start[:self.max_dom]
+            self.parent_grid_ratio = self.parent_grid_ratio[:self.max_dom]
         for dom in range(1,self.max_dom):
             assert (self.dx[dom-1]/self.dx[dom] == self.parent_grid_ratio[dom])
             assert (self.dy[dom-1]/self.dy[dom] == self.parent_grid_ratio[dom])
