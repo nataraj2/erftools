@@ -3,12 +3,31 @@ Processing for each namelist within a WRF namelist.input file
 """
 from datetime import datetime
 
-class TimeControl(object):
+class WRFNamelist(object):
+    def __init__(self,nmldict):
+        self.nml = nmldict
+
+    def getvar(self,varname):
+        val = self.nml[varname]
+        assert not hasattr(val,'__iter__')
+        assert isinstance(val, (int, float, bool))
+        return val
+
+    def getarrayvar(self,varname):
+        arr = self.nml[varname]
+        if not hasattr(arr,'__iter__'):
+            arr = [arr]
+        for i,val in enumerate(arr):
+            assert isinstance(val, (int, float, bool)), \
+                    f'{varname} value {i} is invalid'
+        return arr
+
+class TimeControl(WRFNamelist):
     """&time_control namelist"""
 
     def __init__(self,nmldict):
-        self.nml = nmldict
-        self.restart_interval = self.nml['restart_interval'] # [min]
+        super().__init__(nmldict)
+        self.restart_interval = self.getvar('restart_interval') # [min]
         self.parse_datetime_range()
 
     def __str__(self):
@@ -18,23 +37,23 @@ class TimeControl(object):
     def parse_datetime_range(self):
         # assume all domains have the same start/end datetime for now; TODO: allow for variable start times per domain
         idom = 0
-        start_year  = self.nml['start_year'][idom]
-        start_month = self.nml['start_month'][idom]
-        start_day   = self.nml['start_day'][idom]
-        start_hour  = self.nml['start_hour'][idom]
-        end_year  = self.nml['end_year'][idom]
-        end_month = self.nml['end_month'][idom]
-        end_day   = self.nml['end_day'][idom]
-        end_hour  = self.nml['end_hour'][idom]
+        start_year  = self.getarrayvar('start_year')[idom]
+        start_month = self.getarrayvar('start_month')[idom]
+        start_day   = self.getarrayvar('start_day')[idom]
+        start_hour  = self.getarrayvar('start_hour')[idom]
+        end_year    = self.getarrayvar('end_year')[idom]
+        end_month   = self.getarrayvar('end_month')[idom]
+        end_day     = self.getarrayvar('end_day')[idom]
+        end_hour    = self.getarrayvar('end_hour')[idom]
         self.start_datetime = datetime(start_year, start_month, start_day, start_hour)
         self.end_datetime = datetime(end_year, end_month, end_day, end_hour)
         
     
-class Domains(object):
+class Domains(WRFNamelist):
     """&domains namelist"""
 
     def __init__(self,nmldict):
-        self.nml = nmldict
+        super().__init__(nmldict)
         self.parse_time_integration()
         self.parse_grid()
 
@@ -47,26 +66,26 @@ class Domains(object):
         return s.rstrip()
 
     def parse_time_integration(self):
-        self.time_step = self.nml['time_step'] # seconds
-        self.parent_time_step_ratio = self.nml['parent_time_step_ratio']
+        self.time_step = self.getvar('time_step') # seconds
+        self.parent_time_step_ratio = self.getarrayvar('parent_time_step_ratio')
 
     def parse_grid(self):
-        self.max_dom = self.nml['max_dom']
+        self.max_dom = self.getvar('max_dom')
         # - assume s_we == s_sn == s_vert == [1, 1, ...]
-        self.e_we = self.nml['e_we'][:self.max_dom] # west--east, unstaggered
-        self.e_sn = self.nml['e_sn'][:self.max_dom] # south--north, unstaggered
-        self.e_vert = self.nml['e_vert'][:self.max_dom] # bottom--top, STAGGERED
-        self.dx = self.nml['dx'][:self.max_dom]
-        self.dy = self.nml['dy'][:self.max_dom]
-        self.p_top_requested = self.nml['p_top_requested']
-        self.i_parent_start = self.nml['i_parent_start'][:self.max_dom]
-        self.j_parent_start = self.nml['j_parent_start'][:self.max_dom]
-        self.parent_grid_ratio = self.nml['parent_grid_ratio'][:self.max_dom]
+        self.e_we = self.getarrayvar('e_we')[:self.max_dom] # west--east, unstaggered
+        self.e_sn = self.getarrayvar('e_sn')[:self.max_dom] # south--north, unstaggered
+        self.e_vert = self.getarrayvar('e_vert')[:self.max_dom] # bottom--top, STAGGERED
+        self.dx = self.getarrayvar('dx')[:self.max_dom]
+        self.dy = self.getarrayvar('dy')[:self.max_dom]
+        self.p_top_requested = self.getvar('p_top_requested')
+        self.i_parent_start = self.getarrayvar('i_parent_start')[:self.max_dom]
+        self.j_parent_start = self.getarrayvar('j_parent_start')[:self.max_dom]
+        self.parent_grid_ratio = self.getarrayvar('parent_grid_ratio')[:self.max_dom]
         for dom in range(1,self.max_dom):
             assert (self.dx[dom-1]/self.dx[dom] == self.parent_grid_ratio[dom])
             assert (self.dy[dom-1]/self.dy[dom] == self.parent_grid_ratio[dom])
-            assert self.i_parent_start[0] == 1
-            assert self.j_parent_start[0] == 1
+        assert self.i_parent_start[0] == 1
+        assert self.j_parent_start[0] == 1
 
 
 pbl_mapping = {
@@ -105,11 +124,11 @@ valid_sfclay = {
 }
 
 
-class Physics(object):
+class Physics(WRFNamelist):
     """&physics namelist"""
 
     def __init__(self,nmldict):
-        self.nml = nmldict
+        super().__init__(nmldict)
         self.parse_all()
 
     def __str__(self):
@@ -119,14 +138,14 @@ class Physics(object):
         return s.rstrip()
 
     def parse_all(self):
-        pbl_idx_list = self.nml['bl_pbl_physics']
-        sfclay_idx_list = self.nml['sf_sfclay_physics']
+        pbl_idx_list = self.getvar('bl_pbl_physics')
+        sfclay_idx_list = self.getvar('sf_sfclay_physics')
         for pbl_idx,sfclay_idx in zip(pbl_idx_list, sfclay_idx_list):
             if sfclay_idx not in valid_sfclay[pbl_idx]:
                 print(f'WARNING: unexpected pairing of bl_pbl_physics={pbl_idx} with sf_sfclay_idx={sfclay_idx}')
         self.bl_pbl_physics = [pbl_mapping.get(idx,'UNKNOWN') for idx in pbl_idx_list]
         self.sf_sfclay_physics = [sfclay_mapping.get(idx,'UNKNOWN') for idx in sfclay_idx_list]
-        self.num_land_cat = self.nml['num_land_cat']
+        self.num_land_cat = self.getvar('num_land_cat')
 
 
 diff_opt_mapping = {
@@ -146,11 +165,11 @@ damp_opt_mapping = {
     3: 'Rayleigh implicit gravity-wave damping',
 }
 
-class Dynamics(object):
+class Dynamics(WRFNamelist):
     """&dynamics namelist"""
 
     def __init__(self,nmldict):
-        self.nml = nmldict
+        super().__init__(nmldict)
         self.parse_diffusion()
         self.parse_damping()
 
@@ -163,18 +182,18 @@ class Dynamics(object):
         return s.rstrip()
 
     def parse_diffusion(self):
-        diff_opt_list = self.nml['diff_opt']
-        km_opt_list = self.nml['km_opt']
+        diff_opt_list = self.getvar('diff_opt')
+        km_opt_list = self.getvar('km_opt')
         self.diff_opt = [diff_opt_mapping.get(diff_opt_list[dom], 'UNKNOWN') for dom in range(len(diff_opt_list))]
         self.km_opt = [km_opt_mapping.get(km_opt_list[dom], 'UNKNOWN') for dom in range(len(diff_opt_list))]
-        self.khdif = self.nml['khdif']
-        self.kvdif = self.nml['kvdif']
-        self.diff_6th_opt = self.nml['diff_6th_opt']
-        self.diff_6th_factor = self.nml['diff_6th_factor']
+        self.khdif = self.getvar('khdif')
+        self.kvdif = self.getvar('kvdif')
+        self.diff_6th_opt = self.getvar('diff_6th_opt')
+        self.diff_6th_factor = self.getvar('diff_6th_factor')
 
     def parse_damping(self):
-        self.damp_opt = damp_opt_mapping[self.nml['damp_opt']]
-        self.w_damping = bool(self.nml['w_damping'])
-        self.zdamp = self.nml['zdamp']
-        self.dampcoef = self.nml['dampcoef']
+        self.damp_opt = damp_opt_mapping[self.getvar('damp_opt')]
+        self.w_damping = bool(self.getvar('w_damping'))
+        self.zdamp = self.getvar('zdamp')
+        self.dampcoef = self.getvar('dampcoef')
 
