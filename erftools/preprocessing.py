@@ -57,7 +57,7 @@ class WRFInputDeck(object):
         self.erf_input['erf.fixed_dt'] = dt[0]
 
         self.erf_input['amr.max_level'] = self.domains.max_dom - 1 # zero-based indexing
-        grid_ratio = self.domains.parent_grid_ratio[1] # TODO: assume all nests have same ratio
+        grid_ratio = self.domains.parent_grid_ratio[-1] # TODO: assume all nests have same ratio
         self.erf_input['amr.ref_ratio_vect'] = [grid_ratio, grid_ratio, 1]
         refine_names = ' '.join([f'box{idom:d}' for idom in range(1,self.domains.max_dom)])
         self.erf_input['amr.refinement_indicators'] = refine_names

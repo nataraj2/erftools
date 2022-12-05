@@ -8,6 +8,8 @@ class WRFNamelist(object):
         self.nml = nmldict
 
     def getvar(self,varname,optional=False,default=None):
+        if default is not None:
+            optional = True
         try:
             val = self.nml[varname]
         except KeyError:
@@ -20,11 +22,13 @@ class WRFNamelist(object):
         return val
 
     def getarrayvar(self,varname,optional=False,default=None):
+        if default is not None:
+            optional = True
         try:
             arr = self.nml[varname]
         except KeyError:
             if optional:
-                return default
+                arr = default
             else:
                 raise KeyError(varname)
         if not hasattr(arr,'__iter__'):
@@ -79,8 +83,8 @@ class Domains(WRFNamelist):
 
     def parse_time_integration(self):
         self.time_step = self.getvar('time_step') # seconds
-        self.parent_time_step_ratio = self.getarrayvar('parent_time_step_ratio',
-                                                       optional=True)
+        self.parent_time_step_ratio = self.getarrayvar(
+                'parent_time_step_ratio', default=1)
 
     def parse_grid(self):
         self.max_dom = self.getvar('max_dom')
@@ -92,10 +96,11 @@ class Domains(WRFNamelist):
         self.e_vert = self.getarrayvar('e_vert')[:self.max_dom] # bottom--top, STAGGERED
         self.dx = self.getarrayvar('dx')[:self.max_dom]
         self.dy = self.getarrayvar('dy')[:self.max_dom]
-        self.p_top_requested = self.getvar('p_top_requested', optional=True)
-        self.i_parent_start = self.getarrayvar('i_parent_start', optional=True)
-        self.j_parent_start = self.getarrayvar('j_parent_start', optional=True)
-        self.parent_grid_ratio = self.getarrayvar('parent_grid_ratio', optional=True)
+        self.p_top_requested = self.getvar('p_top_requested', default=5000.)
+        self.i_parent_start = self.getarrayvar('i_parent_start', default=0)
+        self.j_parent_start = self.getarrayvar('j_parent_start', default=0)
+        self.parent_grid_ratio = self.getarrayvar(
+                'parent_grid_ratio', default=1)
         if self.max_dom > 1:
             self.i_parent_start = self.i_parent_start[:self.max_dom]
             self.j_parent_start = self.j_parent_start[:self.max_dom]
@@ -130,6 +135,7 @@ sfclay_mapping = {
 }
 valid_sfclay = {
     # for each PBL scheme
+    0:  [0],
     1:  [1],
     2:  [2],
     5:  [1,2,5,91],
@@ -164,7 +170,7 @@ class Physics(WRFNamelist):
                 print(f'WARNING: unexpected pairing of bl_pbl_physics={pbl_idx} with sf_sfclay_idx={sfclay_idx}')
         self.bl_pbl_physics = [pbl_mapping.get(idx,'UNKNOWN') for idx in pbl_idx_list]
         self.sf_sfclay_physics = [sfclay_mapping.get(idx,'UNKNOWN') for idx in sfclay_idx_list]
-        self.num_land_cat = self.getvar('num_land_cat')
+        self.num_land_cat = self.getvar('num_land_cat', optional=True)
 
 
 diff_opt_mapping = {
@@ -201,18 +207,22 @@ class Dynamics(WRFNamelist):
         return s.rstrip()
 
     def parse_diffusion(self):
-        diff_opt_list = self.getvar('diff_opt')
-        km_opt_list = self.getvar('km_opt')
-        self.diff_opt = [diff_opt_mapping.get(diff_opt_list[dom], 'UNKNOWN') for dom in range(len(diff_opt_list))]
-        self.km_opt = [km_opt_mapping.get(km_opt_list[dom], 'UNKNOWN') for dom in range(len(diff_opt_list))]
-        self.khdif = self.getvar('khdif')
-        self.kvdif = self.getvar('kvdif')
-        self.diff_6th_opt = self.getvar('diff_6th_opt')
-        self.diff_6th_factor = self.getvar('diff_6th_factor')
+        diff_opt_list = self.getarrayvar('diff_opt')
+        km_opt_list = self.getarrayvar('km_opt')
+        self.diff_opt = [diff_opt_mapping.get(diff_opt_list[dom], 'UNKNOWN')
+                         for dom in range(len(diff_opt_list))]
+        self.km_opt = [km_opt_mapping.get(km_opt_list[dom], 'UNKNOWN')
+                       for dom in range(len(diff_opt_list))]
+        self.khdif = self.getvar('khdif', optional=True)
+        self.kvdif = self.getvar('kvdif', optional=True)
+        self.diff_6th_opt = self.getarrayvar(
+                'diff_6th_opt', default=0)
+        self.diff_6th_factor = self.getarrayvar(
+                'diff_6th_factor', default=0.12)
 
     def parse_damping(self):
         self.damp_opt = damp_opt_mapping[self.getvar('damp_opt')]
-        self.w_damping = bool(self.getvar('w_damping'))
+        self.w_damping = bool(self.getvar('w_damping', default=0))
         self.zdamp = self.getvar('zdamp')
         self.dampcoef = self.getvar('dampcoef')
 
