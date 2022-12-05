@@ -54,7 +54,7 @@ class ERFInputFile(MutableMapping):
             pass
         else:
             if self.verbose:
-                print(f'Overriding existing `{key}` with {val}')
+                print(f'Overriding existing `{key}` with {value}')
         finally:
             self.store[self._keytransform(key)] = value
 
