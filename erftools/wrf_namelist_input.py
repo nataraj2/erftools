@@ -7,8 +7,14 @@ class WRFNamelist(object):
     def __init__(self,nmldict):
         self.nml = nmldict
 
-    def getvar(self,varname):
-        val = self.nml[varname]
+    def getvar(self,varname,optional=False,default=None):
+        try:
+            val = self.nml[varname]
+        except KeyError:
+            if optional:
+                return default
+            else:
+                raise KeyError(varname)
         assert not hasattr(val,'__iter__')
         assert isinstance(val, (int, float, bool))
         return val
@@ -86,19 +92,19 @@ class Domains(WRFNamelist):
         self.e_vert = self.getarrayvar('e_vert')[:self.max_dom] # bottom--top, STAGGERED
         self.dx = self.getarrayvar('dx')[:self.max_dom]
         self.dy = self.getarrayvar('dy')[:self.max_dom]
-        self.p_top_requested = self.getvar('p_top_requested')
+        self.p_top_requested = self.getvar('p_top_requested', optional=True)
         self.i_parent_start = self.getarrayvar('i_parent_start', optional=True)
         self.j_parent_start = self.getarrayvar('j_parent_start', optional=True)
-        self.parent_grid_ratio = self.getarrayvar('parent_grid_ratio'. optional=True)
+        self.parent_grid_ratio = self.getarrayvar('parent_grid_ratio', optional=True)
         if self.max_dom > 1:
             self.i_parent_start = self.i_parent_start[:self.max_dom]
             self.j_parent_start = self.j_parent_start[:self.max_dom]
             self.parent_grid_ratio = self.parent_grid_ratio[:self.max_dom]
+            assert self.i_parent_start[0] == 1
+            assert self.j_parent_start[0] == 1
         for dom in range(1,self.max_dom):
             assert (self.dx[dom-1]/self.dx[dom] == self.parent_grid_ratio[dom])
             assert (self.dy[dom-1]/self.dy[dom] == self.parent_grid_ratio[dom])
-        assert self.i_parent_start[0] == 1
-        assert self.j_parent_start[0] == 1
 
 
 pbl_mapping = {
@@ -151,8 +157,8 @@ class Physics(WRFNamelist):
         return s.rstrip()
 
     def parse_all(self):
-        pbl_idx_list = self.getvar('bl_pbl_physics')
-        sfclay_idx_list = self.getvar('sf_sfclay_physics')
+        pbl_idx_list = self.getarrayvar('bl_pbl_physics')
+        sfclay_idx_list = self.getarrayvar('sf_sfclay_physics')
         for pbl_idx,sfclay_idx in zip(pbl_idx_list, sfclay_idx_list):
             if sfclay_idx not in valid_sfclay[pbl_idx]:
                 print(f'WARNING: unexpected pairing of bl_pbl_physics={pbl_idx} with sf_sfclay_idx={sfclay_idx}')
