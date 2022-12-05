@@ -24,8 +24,15 @@ class ERFInputFile(MutableMapping):
 
     def __init__(self, *args, **kwargs):
         self.verbose = kwargs.pop('verbose',True)
-        self.store = dict()
-        # SET DEFAULTS HERE
+        self.store = dict({
+            # retrieved from wrfinput_d01 
+            'erf.most.z0': None,
+            'erf.most.surf_temp': None,
+            'erf.latitude': None,
+            'erf.rotational_time_period': None,
+            # estimated quuantities
+            'erf.z_levels': [],  # can estimate from wrfinput_d01
+        })
         self.update(dict(*args, **kwargs))  # use the free update to set keys
 
     def __str__(self):

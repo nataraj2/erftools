@@ -15,12 +15,14 @@ class WRFInputDeck(object):
     """
 
     def __init__(self,nmlpath):
+        # scrape WRF namelists
         with open(nmlpath,'r') as f:
             self.nml = f90nml.read(f)
         self.time_control = TimeControl(self.nml['time_control'])
         self.domains = Domains(self.nml['domains'])
         self.physics = Physics(self.nml['physics'])
         self.dynamics = Dynamics(self.nml['dynamics'])
+        # calculate ERF equivalents
         self.erf_input = ERFInputFile()
         self.generate_inputs()
 
@@ -135,7 +137,6 @@ class WRFInputDeck(object):
         if landuse_table_path is None:
             print('Need to specify `landuse_table_path` from your WRF installation'\
                   'land-use indices to z0')
-            self.erf_input['erf.most.z0'] = 'UNDEFINED'
             return
         LUtype =  wrfinp.attrs['MMINLU']
         alltables = LandUseTable(landuse_table_path)
