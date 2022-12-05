@@ -25,6 +25,7 @@ class ERFInputFile(MutableMapping):
     def __init__(self, *args, **kwargs):
         self.verbose = kwargs.pop('verbose',True)
         self.store = dict({
+            'amr.refinement_indicators': '',
             # retrieved from wrfinput_d01 
             'erf.most.z0': None,
             'erf.most.surf_temp': None,
@@ -89,9 +90,12 @@ fabarray.mfiter_tile_size = 1024 1024 1024
 amr.n_cell           = {' '.join([str(v) for v in self.store['amr.n_cell']])}
 geometry.prob_extent = {' '.join([str(v) for v in self.store['geometry.prob_extent']])} # zmax estimated from WRF `p_top_requested`
 geometry.is_periodic = 0 0 0
-
-erf.z_levels = {' '.join([str(v) for v in self.store['erf.z_levels']])}  # TODO: need to implement this input
-
+""")
+            if len(self.store['erf.z_levels']) > 0:
+                f.write(f"""
+#erf.z_levels = {' '.join([str(v) for v in self.store['erf.z_levels']])}  # TODO: need to implement this input
+""")
+            f.write(f"""
 # TIME STEP CONTROL
 max_step           = 0
 stop_time          = {self.store['stop_time']}
@@ -100,18 +104,27 @@ erf.use_native_mri = 1
 
 # REFINEMENT / REGRIDDING
 amr.max_level      = {self.store['amr.max_level']}  # maximum level number allowed
+""")
+            if self.store['amr.refinement_indicators'] != '':  
+                f.write("""
 amr.ref_ratio_vect = {' '.join([str(v) for v in self.store['amr.ref_ratio_vect']])}
 amr.refinement_indicators = {self.store['amr.refinement_indicators']}
 {refinement_boxes.rstrip()}
+""")
 
+            f.write("""
 # BOUNDARY CONDITIONS
-zlo.type = "MOST"
+zlo.type = "{self.store['zlo.type']}"
 zhi.type = "SlipWall"
-
+""")
+            if self.store['zlo.type'] == 'MOST':
+                f.write(f"""
 erf.most.z0 = {self.store['erf.most.z0']}  # TODO: use roughness map
 erf.most.zref = 200.0
 erf.most.surf_temp = {self.store['erf.most.surf_temp']}  # TODO: use surface temperature map
+""")
 
+            f.write(f"""
 # INITIAL CONDITIONS
 erf.init_type    = "real"
 erf.nc_init_file = "wrfinput_d01"
