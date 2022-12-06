@@ -79,11 +79,17 @@ class WRFInputDeck(object):
             refine_names = ' '.join([f'box{idom:d}' for idom in range(1,self.domains.max_dom)])
             self.erf_input['amr.refinement_indicators'] = refine_names
             for idom in range(1,self.domains.max_dom):
-                parent_ds  = np.array([  self.domains.dx[idom-1],   self.domains.dy[idom-1]], dtype=float)
-                child_ds   = np.array([  self.domains.dx[idom  ],   self.domains.dy[idom  ]], dtype=float)
-                parent_ext = np.array([self.domains.e_we[idom-1], self.domains.e_sn[idom-1]]) * parent_ds
-                child_ext  = np.array([self.domains.e_we[idom  ], self.domains.e_sn[idom  ]]) * child_ds
-                lo_idx = np.array([self.domains.i_parent_start[idom]-1, self.domains.j_parent_start[idom]-1])
+                dx = self.domains.dx
+                dy = self.domains.dy
+                imax = self.domains.e_we
+                jmax = self.domains.e_sn
+                parent_ds  = np.array([  dx[idom-1],   dy[idom-1]], dtype=float)
+                child_ds   = np.array([  dx[idom  ],   dy[idom  ]], dtype=float)
+                parent_ext = np.array([imax[idom-1], jmax[idom-1]]) * parent_ds
+                child_ext  = np.array([imax[idom  ], jmax[idom  ]]) * child_ds
+                lo_idx = np.array([
+                    self.domains.i_parent_start[idom] - 1,
+                    self.domains.j_parent_start[idom] - 1])
                 in_box_lo = lo_idx * parent_ds
                 in_box_hi = in_box_lo + child_ext
                 assert (in_box_hi[0] <= parent_ext[0])
@@ -109,7 +115,6 @@ class WRFInputDeck(object):
             assert (not any([diff_opt.startswith('3D') for diff_opt in self.dynamics.km_opt])), \
                     'Incompatible PBL scheme and diffusion options specified'
 
-        self.erf_input['erf.les_type'] = 'None' # default
         if any([opt != 'constant' for opt in self.dynamics.km_opt]):
             self.erf_input['erf.les_type'] = self.dynamics.km_opt[0]
             self.erf_input['erf.molec_diff_type'] = 'Constant' # default
@@ -118,6 +123,7 @@ class WRFInputDeck(object):
             self.erf_input['erf.alpha_T'] = 0.0
             self.erf_input['erf.alpha_C'] = 0.0
         else:
+            self.erf_input['erf.les_type'] = 'None' # default
             if any([kh != kv for kh,kv in zip(self.dynamics.khdif, self.dynamics.kvdif)]):
                 print('NOTE: horizontal and vertical diffusion coefficients assumed equal')
             self.erf_input['erf.molec_diff_type'] = 'ConstantAlpha'
