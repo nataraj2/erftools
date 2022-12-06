@@ -90,7 +90,7 @@ fabarray.mfiter_tile_size = 1024 1024 1024
 
 # PROBLEM SIZE & GEOMETRY
 amr.n_cell           = {' '.join([str(v) for v in self.store['amr.n_cell']])}
-geometry.prob_extent = {' '.join([str(v) for v in self.store['geometry.prob_extent']])} # zmax estimated from WRF `p_top_requested`
+geometry.prob_extent = {' '.join([str(v) for v in self.store['geometry.prob_extent']])}
 geometry.is_periodic = {' '.join([str(int(b)) for b in self.store['geometry.is_periodic']])}
 """)
             if len(self.store['erf.z_levels']) > 0:

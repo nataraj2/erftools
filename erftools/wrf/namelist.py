@@ -96,6 +96,7 @@ class Domains(WRFNamelist):
         self.e_vert = self.getarrayvar('e_vert')[:self.max_dom] # bottom--top, STAGGERED
         self.dx = self.getarrayvar('dx')[:self.max_dom]
         self.dy = self.getarrayvar('dy')[:self.max_dom]
+        self.ztop = self.getvar('ztop', optional=True)
         self.p_top_requested = self.getvar('p_top_requested', default=5000.)
         self.i_parent_start = self.getarrayvar('i_parent_start', default=0)
         self.j_parent_start = self.getarrayvar('j_parent_start', default=0)
