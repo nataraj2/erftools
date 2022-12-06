@@ -227,3 +227,14 @@ class Dynamics(WRFNamelist):
         self.zdamp = self.getvar('zdamp')
         self.dampcoef = self.getvar('dampcoef')
 
+class BoundaryControl(WRFNamelist):
+    """&bdy_control namelist"""
+
+    def __init__(self,nmldict):
+        super().__init__(nmldict)
+        self.parse()
+
+    def parse(self):
+        self.periodic_x = bool(self.getvar('periodic_x', default=False))
+        self.periodic_y = bool(self.getvar('periodic_y', default=False))
+

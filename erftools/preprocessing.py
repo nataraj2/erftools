@@ -3,7 +3,8 @@ import pandas as pd
 import xarray as xr
 import f90nml
 
-from .wrf.namelist import TimeControl, Domains, Physics, Dynamics
+from .wrf.namelist import (TimeControl, Domains, Physics, Dynamics,
+                           BoundaryControl)
 from .wrf.landuse import LandUseTable
 from .inputs import ERFInputFile
 
@@ -22,6 +23,7 @@ class WRFInputDeck(object):
         self.domains = Domains(self.nml['domains'])
         self.physics = Physics(self.nml['physics'])
         self.dynamics = Dynamics(self.nml['dynamics'])
+        self.bdy_control = BoundaryControl(self.nml['bdy_control'])
         # calculate ERF equivalents
         self.erf_input = ERFInputFile()
         self.generate_inputs()
@@ -51,6 +53,10 @@ class WRFInputDeck(object):
         # TODO: add vertical stretching
         n_cell = np.array([self.domains.e_we[0], self.domains.e_sn[0], self.domains.e_vert[0]]) - 1
         self.erf_input['geometry.prob_extent'] = n_cell * np.array([self.domains.dx[0], self.domains.dy[0], np.nan])
+        self.erf_input['geometry.is_periodic'] = [
+                self.bdy_control.periodic_x,
+                self.bdy_control.periodic_y,
+                False]
         ztop_est = 287.0 * 300.0 / 9.81 * np.log(1e5/self.domains.p_top_requested)
         self.erf_input['geometry.prob_extent'][2] = ztop_est
         self.erf_input['amr.n_cell'] = n_cell
