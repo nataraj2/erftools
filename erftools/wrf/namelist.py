@@ -129,13 +129,14 @@ pbl_mapping = {
     99: 'MRF',
 }
 sfclay_mapping = {
+    0: 'none',
     1: 'MOST', # w/ Carslon-Boland viscous sub-layer and standard similarity function lookup
     2: 'Eta', # Janjic Eta similarity, w/ Zilitinkevich thermal roughness length, standard similarity function lookup
     5: 'MYNN',
 }
 valid_sfclay = {
     # for each PBL scheme
-    0:  [0],
+    0:  list(range(100)),
     1:  [1],
     2:  [2],
     5:  [1,2,5,91],

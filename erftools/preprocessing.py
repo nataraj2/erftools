@@ -83,12 +83,13 @@ class WRFInputDeck(object):
         self.erf_input['amr.check_int'] = int(restart_period / dt[0])
 
         sfclayscheme = self.physics.sf_sfclay_physics[0]
-        if sfclayscheme == 'MOST':
+        if sfclayscheme == 'none':
+            self.erf_input['zlo.type'] = 'SlipWall'
+        elif sfclayscheme == 'MOST':
             self.erf_input['zlo.type'] = 'MOST'
         else:
-            print(f'NOTE: Surface layer scheme {sfclayscheme} not implemented',
-                  'in ERF, setting to SlipWall')
-            self.erf_input['zlo.type'] = 'SlipWall'
+            print(f'NOTE: Surface layer scheme {sfclayscheme} not implemented in ERF')
+            self.erf_input['zlo.type'] = sfclayscheme
 
         # TODO: specify PBL scheme per level
         self.erf_input['erf.pbl_type'] = self.physics.bl_pbl_physics[0]
