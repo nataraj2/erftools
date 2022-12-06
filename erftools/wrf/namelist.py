@@ -180,9 +180,10 @@ diff_opt_mapping = {
 }
 km_opt_mapping = {
     1: 'constant',
-    2: '3D TKE',
-    3: '3D deformation',
-    4: '2D deformation',
+    2: 'Deardorff', # 3D TKE
+    3: 'Smagorinsky', # 3D deformation
+    4: '2D deformation', # horizontal diffusion diagnosed from horizontal
+                         #   deformation, vertical diffusion from PBL scheme
 }
 damp_opt_mapping = {
     0: 'none',

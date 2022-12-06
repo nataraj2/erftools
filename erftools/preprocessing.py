@@ -103,8 +103,9 @@ class WRFInputDeck(object):
             assert (not any([diff_opt.startswith('3D') for diff_opt in self.dynamics.km_opt])), \
                     'Incompatible PBL scheme and diffusion options specified'
 
+        self.erf_input['erf.les_type'] = 'None' # default
         if any([opt != 'constant' for opt in self.dynamics.km_opt]):
-            print('NOTE: Variable diffusion not implemented in ERF')
+            self.erf_input['erf.les_type'] = self.dynamics.km_opt[0]
             self.erf_input['erf.molec_diff_type'] = 'Constant' # default
             self.erf_input['erf.rho0_trans'] = 1.0
             self.erf_input['erf.dynamicViscosity'] = 0.0
@@ -113,7 +114,7 @@ class WRFInputDeck(object):
         else:
             if any([kh != kv for kh,kv in zip(self.dynamics.khdif, self.dynamics.kvdif)]):
                 print('NOTE: horizontal and vertical diffusion coefficients assumed equal')
-            self.erf_input['erf.molec_diff_type'] = 'ConstantAlpha' # default
+            self.erf_input['erf.molec_diff_type'] = 'ConstantAlpha'
             self.erf_input['erf.rho0_trans'] = 1.0
             self.erf_input['erf.dynamicViscosity'] = self.dynamics.khdif[0]
             self.erf_input['erf.alpha_T'] = self.dynamics.khdif[0]

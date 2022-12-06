@@ -145,7 +145,7 @@ erf.nc_bdy_file  = {bdylist}
 
             f.write(f"""
 # PHYSICS OPTIONS
-erf.les_type = "None"
+erf.les_type = "{self.store['erf.les_type']}"
 erf.pbl_type = "{self.store['erf.pbl_type']}"  # TODO: specify for each level
 erf.abl_driver_type = "None"
 erf.use_gravity = true
