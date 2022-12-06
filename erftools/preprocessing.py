@@ -3,8 +3,8 @@ import pandas as pd
 import xarray as xr
 import f90nml
 
-from .wrf_namelist_input import TimeControl, Domains, Physics, Dynamics
-from .wrf_landuse import LandUseTable
+from .wrf.namelist import TimeControl, Domains, Physics, Dynamics
+from .wrf.landuse import LandUseTable
 from .inputs import ERFInputFile
 
 class WRFInputDeck(object):
