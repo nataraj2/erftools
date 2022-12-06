@@ -137,7 +137,7 @@ erf.most.surf_temp = {self.store['erf.most.surf_temp']}  # TODO: use surface tem
                 f.write("""
 # INITIAL CONDITIONS
 erf.init_type           = "input_sounding"
-erf.input_sounding_file = "input_sounding"
+erf.init_sounding_ideal = 1
 """)
             else:
                 bdylist = ' '.join([f'"wrfbdy_d{idom+1:02d}"'
