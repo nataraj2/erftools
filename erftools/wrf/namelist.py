@@ -113,7 +113,7 @@ class Domains(WRFNamelist):
 
 
 pbl_mapping = {
-    0:  'none',
+    0:  'None',
     1:  'YSU',
     2:  'MYJ',
     3:  'GFS',
