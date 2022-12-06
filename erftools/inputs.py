@@ -29,8 +29,8 @@ class ERFInputFile(MutableMapping):
             # retrieved from wrfinput_d01 
             'erf.most.z0': None,
             'erf.most.surf_temp': None,
-            'erf.latitude': None,
-            'erf.rotational_time_period': None,
+            'erf.latitude': 90.0,
+            'erf.rotational_time_period': 86400.0,
             # estimated quuantities
             'erf.z_levels': [],  # can estimate from wrfinput_d01
         })
@@ -150,7 +150,7 @@ erf.pbl_type = "{self.store['erf.pbl_type']}"  # TODO: specify for each level
 erf.abl_driver_type = "None"
 erf.use_gravity = true
 erf.use_coriolis = true
-erf.latitutde = {self.store['erf.latitude']}
+erf.latitude = {self.store['erf.latitude']}
 erf.rotational_time_period = {self.store['erf.rotational_time_period']}
 
 erf.molec_diff_type = "{self.store['erf.molec_diff_type']}"
