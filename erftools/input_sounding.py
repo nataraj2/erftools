@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from constants import R_d, c_p, g, p0, rvovrd, cvpm
+from .constants import R_d, c_p, g, p0, rvovrd, cvpm
 
 
 class InputSounding(object):
