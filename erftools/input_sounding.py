@@ -88,7 +88,6 @@ class InputSounding(object):
             self.p[k] = self.p[k+1] + 0.5*dz*(self.rho[k]+self.rho[k+1])*g
 
         if verbose:
-            print('first cell p dry, moist =',self.p[0],self.pm[0])
             print('error',
                   np.max(np.abs(p0 - self.rho*R_d*self.thm*(self.pm/p0)**cvpm)))
 
@@ -129,6 +128,8 @@ class InputSounding(object):
             self.pm[0] = self.p_surf - 0.5*dz*(rho_surf + self.rho[0])*g*qvf1
             self.rho[0] = 1./((R_d/p0)*self.th[0]*qvf*((self.pm[0]/p0)**cvpm))
         self.thm[0] = self.th[0] * qvf
+        if verbose:
+            print(0.0, self.pm[0], self.rho[0], self.thm[0])
 
         # 2. Integrate up the column
         for k in range(1,N):
@@ -142,6 +143,8 @@ class InputSounding(object):
                 assert self.pm[k] > 0, 'too cold for chosen height'
                 self.rho[k] = 1./((R_d/p0)*self.th[k]*qvf*((self.pm[k]/p0)**cvpm))
             self.thm[k] = self.th[k] * qvf
+            if verbose:
+                print(self.z[k], self.pm[k], self.rho[k], self.thm[k])
         # we have the moist sounding at this point...
 
         # 3. Compute the dry sounding using p at the highest level from the
@@ -152,7 +155,6 @@ class InputSounding(object):
             self.p[k] = self.p[k+1] + 0.5*dz*(self.rho[k]+self.rho[k+1])*g
 
         if verbose:
-            print('first cell p dry, moist =',self.p[0],self.pm[0])
             print('error',
                   np.max(np.abs(p0 - self.rho*R_d*self.thm*(self.pm/p0)**cvpm)))
 
