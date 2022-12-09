@@ -8,6 +8,3 @@ c_v = c_p - R_d # specific heat of dry air at constant volume [J/(kg K)]
 # model constants
 p0 = 1e5 # pressure at 1000 hPa [Pa]
 
-# WRF var names
-rvovrd = R_v / R_d
-cvpm = -c_v / c_p
