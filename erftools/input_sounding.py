@@ -177,13 +177,16 @@ class InputSounding(object):
         ax[0].plot(self.th_surf, 0, 'ko', markerfacecolor='none')
         ax[1].plot(self.qv, self.z)
         ax[1].plot(self.qv_surf, 0, 'ko', markerfacecolor='none')
+        ax[1].set_xlim((0,None))
         ax[2].plot(self.u, self.z, label='u')
         ax[2].plot(self.v, self.z, label='v')
         if allplots:
             ax[3].plot(self.rho, self.z)
+            ax[3].set_xlim((0,None))
             ax[4].plot(self.p, self.z, label='dry')
             ax[4].plot(self.pm, self.z, label='moist')
             ax[4].plot(self.p_surf, 0, 'ko', markerfacecolor='none')
+            ax[4].set_xlim((0,None))
 
         # labels and legends
         ax[0].set_ylabel('altitude AGL [m]')
@@ -211,13 +214,13 @@ if __name__ == '__main__':
 
     inp = InputSounding()
     fig,ax = inp.plot()
-    fig.savefig('input_sounding0.png',bbox_inches='tight')
+    fig.savefig('sounding.png',bbox_inches='tight')
 
     inp.integrate_column_wrf(verbose=True)
     fig,ax = inp.plot()
-    fig.savefig('input_sounding_wrf.png',bbox_inches='tight')
+    fig.savefig('sounding_hse_wrf.png',bbox_inches='tight')
 
     inp.integrate_column(verbose=True)
     fig,ax = inp.plot()
-    fig.savefig('input_sounding.png',bbox_inches='tight')
+    fig.savefig('sounding_hse.png',bbox_inches='tight')
 
