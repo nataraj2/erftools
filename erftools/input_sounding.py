@@ -139,6 +139,7 @@ class InputSounding(object):
         if verbose:
             ptmp = p0 * (R_d * self.rho[0] * self.thm[0] / p0)**1.4
             err = self.pm[0] - ptmp
+            print('MOIST column')
             print(self.z[0], self.pm[0], self.rho[0], self.thm[0], err)
 
         # 2. Integrate up the column
@@ -161,9 +162,9 @@ class InputSounding(object):
         # 3. Compute the dry sounding using p at the highest level from the
         #    moist sounding and integrating down
         self.p[N-1] = self.pm[N-1] # no moisture at top of column
-        self.rhod[N-1] = self.rho[N-1] / (1 + self.qv[N-1])
+        self.rhod[N-1] = 1./((R_d/p0)*self.th[N-1]*((self.p[N-1]/p0)**cvpm)) 
         for k in range(N-2,-1,-1):
-            self.rhod[k] = self.rhod[k+1]
+            self.rhod[k] = self.rhod[k+1] # guess
             for i in range(Niter):
                 self.p[k] = self.p[k+1] \
                         + 0.5*dz*(self.rhod[k] + self.rhod[k+1])*g
@@ -174,6 +175,12 @@ class InputSounding(object):
             print('error (moist)', np.max(np.abs(self.pm - ptmp)))
             ptmp = p0 * (R_d * self.rhod * self.th / p0)**1.4
             print('error (dry)', np.max(np.abs(self.p - ptmp)))
+            print('')
+            print('DRY column')
+            for k in range(N):
+                ptmp = p0 * (R_d * self.rhod[k] * self.th[k] / p0)**1.4
+                err = self.p[k] - ptmp
+                print(self.z[k], self.p[k], self.rhod[k], self.th[k], err)
 
 
     def plot(self):
