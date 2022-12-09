@@ -41,7 +41,10 @@ class InputSounding(object):
           exactly virtual potential temperature. See, e.g.,
           https://github.com/NCAR/WRFV3/issues/4
         - `qv_surf` is ignored
-        - WRF ideal.exe also returns dry theta
+        - moist integration has factor of (1+qv), implying that the
+          density is dry; but the integration starts with rho_surf that
+          is moist... (calculated from total p, moist theta on the
+          surface)
         """
         qvf = 1. + rvovrd*self.qv[0]
         rho_surf = 1. / ((R_d/p0)*self.th_surf*qvf*((self.p_surf/p0)**cvpm))
@@ -89,8 +92,10 @@ class InputSounding(object):
             self.p[k] = self.p[k+1] + 0.5*dz*(self.rho[k]+self.rho[k+1])*g
 
         if verbose:
-            print('error',
-                  np.max(np.abs(p0 - self.rho*R_d*self.thm*(self.pm/p0)**cvpm)))
+            ptmp = p0 * (R_d * self.rho * self.thm / p0)**1.4
+            print('error (moist)', np.max(np.abs(self.pm - ptmp)))
+            ptmp = p0 * (R_d * self.rho * self.th / p0)**1.4
+            print('error (dry)', np.max(np.abs(self.p - ptmp)))
 
 
     def integrate_column(self,verbose=False,Niter=10):
@@ -110,54 +115,65 @@ class InputSounding(object):
         rho_surf = 1. / ((R_d/p0)*self.th_surf*qvf*((self.p_surf/p0)**cvpm))
         pi_surf = (self.p_surf/p0)**(R_d/c_p)
         if verbose:
-            print('surface density, pi =',rho_surf,pi_surf)
+            ptmp = p0 * (R_d * rho_surf * self.th_surf*qvf / p0)**1.4
+            err = self.p_surf - ptmp
+            print('surface density, pi, error =',rho_surf,pi_surf,err)
 
         # integrate moist sounding hydrostatically, starting from the specified
         # surface pressure
         N = len(self.th)
         self.rho = np.zeros(N)
+        self.rhod = np.zeros(N)
         self.thm = np.zeros(N)
         self.pm = np.zeros(N)
         self.p = np.zeros(N)
 
         # 1. Integrate from surface to lowest level
         qvf = 1. + (rvovrd-1)*self.qv[0]
-        qvf1 = 1. + self.qv[0]
-        self.rho[0] = rho_surf
+        self.rho[0] = rho_surf # guess
         dz = self.z[0]
         for i in range(Niter):
-            self.pm[0] = self.p_surf - 0.5*dz*(rho_surf + self.rho[0])*g*qvf1
+            self.pm[0] = self.p_surf - 0.5*dz*(rho_surf + self.rho[0])*g
             self.rho[0] = 1./((R_d/p0)*self.th[0]*qvf*((self.pm[0]/p0)**cvpm))
         self.thm[0] = self.th[0] * qvf
         if verbose:
-            print(0.0, self.pm[0], self.rho[0], self.thm[0])
+            ptmp = p0 * (R_d * self.rho[0] * self.thm[0] / p0)**1.4
+            err = self.pm[0] - ptmp
+            print(self.z[0], self.pm[0], self.rho[0], self.thm[0], err)
 
         # 2. Integrate up the column
         for k in range(1,N):
-            self.rho[k] = self.rho[k-1]
+            self.rho[k] = self.rho[k-1] # guess
             dz = self.z[k] - self.z[k-1]
-            qvf1 = 0.5*(2. + (self.qv[k-1] + self.qv[k]))
             qvf = 1. + (rvovrd-1)*self.qv[k]
             for i in range(Niter):
                 self.pm[k] = self.pm[k-1] \
-                        - 0.5*dz*(self.rho[k] + self.rho[k-1])*g*qvf1
+                        - 0.5*dz*(self.rho[k] + self.rho[k-1])*g
                 assert self.pm[k] > 0, 'too cold for chosen height'
                 self.rho[k] = 1./((R_d/p0)*self.th[k]*qvf*((self.pm[k]/p0)**cvpm))
             self.thm[k] = self.th[k] * qvf
             if verbose:
-                print(self.z[k], self.pm[k], self.rho[k], self.thm[k])
+                ptmp = p0 * (R_d * self.rho[k] * self.thm[k] / p0)**1.4
+                err = self.pm[k] - ptmp
+                print(self.z[k], self.pm[k], self.rho[k], self.thm[k], err)
         # we have the moist sounding at this point...
 
         # 3. Compute the dry sounding using p at the highest level from the
         #    moist sounding and integrating down
-        self.p[N-1] = self.pm[N-1]
+        self.p[N-1] = self.pm[N-1] # no moisture at top of column
+        self.rhod[N-1] = self.rho[N-1] / (1 + self.qv[N-1])
         for k in range(N-2,-1,-1):
-            dz = self.z[k+1] - self.z[k]
-            self.p[k] = self.p[k+1] + 0.5*dz*(self.rho[k]+self.rho[k+1])*g
+            self.rhod[k] = self.rhod[k+1]
+            for i in range(Niter):
+                self.p[k] = self.p[k+1] \
+                        + 0.5*dz*(self.rhod[k] + self.rhod[k+1])*g
+                self.rhod[k] = 1./((R_d/p0)*self.th[k]*((self.p[k]/p0)**cvpm)) 
 
         if verbose:
-            print('error',
-                  np.max(np.abs(p0 - self.rho*R_d*self.thm*(self.pm/p0)**cvpm)))
+            ptmp = p0 * (R_d * self.rho * self.thm / p0)**1.4
+            print('error (moist)', np.max(np.abs(self.pm - ptmp)))
+            ptmp = p0 * (R_d * self.rhod * self.th / p0)**1.4
+            print('error (dry)', np.max(np.abs(self.p - ptmp)))
 
 
     def plot(self):
@@ -182,7 +198,12 @@ class InputSounding(object):
         ax[2].plot(self.u, self.z, label='u')
         ax[2].plot(self.v, self.z, label='v')
         if allplots:
-            ax[3].plot(self.rho, self.z)
+            try:
+                ax[3].plot(self.rhod, self.z, label='dry')
+            except AttributeError:
+                # not calculated by integrate_column_wrf
+                pass
+            ax[3].plot(self.rho, self.z, label='moist')
             ax[3].set_xlim((0,None))
             ax[4].plot(self.p, self.z, label='dry')
             ax[4].plot(self.pm, self.z, label='moist')
@@ -201,6 +222,7 @@ class InputSounding(object):
         ax[2].legend(loc='best')
         if allplots:
             ax[3].set_xlabel('density [kg/m^3]')
+            ax[3].legend(loc='best')
             ax[4].set_xlabel('pressure [Pa]')
             ax[4].legend(loc='best')
 
