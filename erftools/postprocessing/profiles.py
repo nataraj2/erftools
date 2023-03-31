@@ -21,11 +21,11 @@ class AveragedProfiles(object):
     timename = 't' # 'time'
     heightname = 'z' # 'height'
     profile1vars = [timename,heightname,'u','v','w','ρ','θ','e']
-    profile2vars = [timename,heightname,'uu','uv','uw',
-                                        'vv','vw','ww',
-                                        'θu','θv','θw','θθ',
-                                        'ku','kv','kw',
-                                        'pu','pv','pw']
+    profile2vars = [timename,heightname,"u'u'", "u'v'", "u'w'",
+                                        "v'v'", "v'w'", "w'w'",
+                                        "θ'u'", "θ'v'", "θ'w'", "θ'θ'",
+                                        "k'u'", "k'v'", "k'w'",
+                                        "p'u'", "p'v'", "p'w'"]
     profile3vars = [timename,heightname,'τ11','τ12','τ13',
                                         'τ22','τ23','τ33',
                                         'τθw','ε']
@@ -67,3 +67,30 @@ class AveragedProfiles(object):
         covar = self._read_text_data(covar_fpath, self.profile2vars)
         sfs   = self._read_text_data(sfs_fpath, self.profile3vars)
         self.ds = pd.concat([mean,covar,sfs], axis=1).to_xarray()
+
+    def calc_ddt(self):
+        """Calculate time derivative, based on the given profile output
+        interval.
+        """
+        dt = self.ds.coords[self.timename][1] - ds.coords[self.timename][0]
+        print('output dt=',dt)
+        for varn in self.profile1vars[2:]:
+            self.ds[f'{varn}/dt'] = self.ds[varn].diff(self.timename) / dt
+
+    def calc_gradz(self):
+        dz = self.ds.coords[self.heightname][1] - ds.coords[self.heightname][0]
+        for varn in self.profile1vars[2:]:
+            self.ds[f'{varn}/dz'] = self.ds[varn].diff(self.heightname) / dz
+
+    def calc_stress(self):
+        """Calculate total stresses (note: τ are deviatoric stresses)"""
+        trace = self.ds['τ11'] + self.ds['τ22'] + self.ds['τ33']
+        assert np.abs(trace).max() < 1e-14
+        self.ds['uu_tot'] = self.ds["u'u'"] + self.ds['τ11'] + 2./3.*self.ds['e']
+        self.ds['vv_tot'] = self.ds["v'v'"] + self.ds['τ22'] + 2./3.*self.ds['e']
+        self.ds['ww_tot'] = self.ds["w'w'"] + self.ds['τ33'] + 2./3.*self.ds['e']
+        self.ds['uv_tot'] = self.ds["u'v'"] + self.ds['τ12']
+        self.ds['uw_tot'] = self.ds["u'w'"] + self.ds['τ13']
+        self.ds['vw_tot'] = self.ds["v'w'"] + self.ds['τ23']
+        self.ds['ustar'] = (self.ds['uw_tot']**2 + self.ds['vw_tot']**2)**0.25
+        self.ds['hfx'] = self.ds["θ'w'"] + self.ds['τθw']
