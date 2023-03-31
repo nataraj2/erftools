@@ -30,10 +30,11 @@ class AveragedProfiles(object):
                                         'τ22','τ23','τ33',
                                         'τθw','ε']
 
-    def __init__(self, *args, zexact=None):
+    def __init__(self, *args, sampling_interval=None, zexact=None):
         """Load diagnostic profile data from 3 datafiles, provided as 
         separate args, a list, or a glob string. If provided, `zexact`
-        is used to override the height coordinate variable.
+        `sampling_interval` and/or `zexact` are used to override the
+        time/height coordinate variable(s).
         """
         assert (len(args) == 1) or (len(args) == 3)
         if len(args) == 1:
@@ -48,7 +49,10 @@ class AveragedProfiles(object):
                     f'Expected to find 3 files, found {len(fpathlist)} {fpathlist}'
         else:
             fpathlist = args
-        self.load_profiles(*fpathlist)
+        self._load_profiles(*fpathlist)
+        if sampling_interval is not None:
+            texact = (np.arange(self.ds.dims[self.timename])+1) * sampling_interval
+            self.ds = self.ds.assign_coords({self.timename: texact})
         if zexact is not None:
             self.ds = self.ds.assign_coords({self.heightname: zexact})
 
@@ -58,7 +62,7 @@ class AveragedProfiles(object):
             header=None, names=columns)
         return df.set_index([self.timename,self.heightname])
 
-    def load_profiles(self, mean_fpath, covar_fpath, sfs_fpath):
+    def _load_profiles(self, mean_fpath, covar_fpath, sfs_fpath):
         mean  = self._read_text_data(mean_fpath, self.profile1vars)
         covar = self._read_text_data(covar_fpath, self.profile2vars)
         sfs   = self._read_text_data(sfs_fpath, self.profile3vars)
