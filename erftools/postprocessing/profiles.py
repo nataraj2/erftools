@@ -60,12 +60,14 @@ class AveragedProfiles(object):
         df = pd.read_csv(
             fpath, delim_whitespace=True,
             header=None, names=columns)
-        return df.set_index([self.timename,self.heightname])
+        df = df.set_index([self.timename,self.heightname])
+        isdup = df.index.duplicated(keep='last')
+        return df.loc[~isdup]
 
     def _load_profiles(self, mean_fpath, covar_fpath, sfs_fpath):
-        mean  = self._read_text_data(mean_fpath, self.profile1vars)
+        mean  = self._read_text_data(mean_fpath,  self.profile1vars)
         covar = self._read_text_data(covar_fpath, self.profile2vars)
-        sfs   = self._read_text_data(sfs_fpath, self.profile3vars)
+        sfs   = self._read_text_data(sfs_fpath,   self.profile3vars)
         self.ds = pd.concat([mean,covar,sfs], axis=1).to_xarray()
 
     def calc_ddt(self):
