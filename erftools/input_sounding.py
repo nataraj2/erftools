@@ -194,6 +194,22 @@ class InputSounding(object):
                 print(self.z[k], self.p[k], self.rhod[k], self.th[k], err)
 
 
+    def to_dataframe(self):
+        import pandas as pd
+        return pd.DataFrame(
+            {
+                'p': self.pm,
+                'rho': self.rho,
+                'theta_m': self.thm,
+                'p_d': self.p,
+                'rho_d': self.rhod,
+                'theta': self.th,
+                'u': self.u,
+                'v': self.v,
+            },
+            index=pd.Index(self.z,name='z'))
+
+
     def plot(self):
         """Call before integrate_column() to plot just the inputs;
         after integrating through the moist air column, this will plot
