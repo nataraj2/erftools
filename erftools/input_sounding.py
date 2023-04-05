@@ -2,8 +2,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from .constants.thermo import R_d, c_p, g, p0
-from .constants.wrf import rvovrd, cvpm
+from .constants import R_d, c_p, g, p0
+from .wrf.constants import rvovrd, cvpm
 
 
 class InputSounding(object):
