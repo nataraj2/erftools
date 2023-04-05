@@ -30,10 +30,10 @@ class AveragedProfiles(object):
                                         'τ22','τ23','τ33',
                                         'τθw','ε']
 
-    def __init__(self, *args, sampling_interval=None, zexact=None):
+    def __init__(self, *args, t0=0.0, sampling_interval_s=None, zexact=None):
         """Load diagnostic profile data from 3 datafiles, provided as 
         separate args, a list, or a glob string. If provided, `zexact`
-        `sampling_interval` and/or `zexact` are used to override the
+        `sampling_interval_s` and/or `zexact` are used to override the
         time/height coordinate variable(s).
         """
         assert (len(args) == 1) or (len(args) == 3)
@@ -50,8 +50,9 @@ class AveragedProfiles(object):
         else:
             fpathlist = args
         self._load_profiles(*fpathlist)
-        if sampling_interval is not None:
-            texact = (np.arange(self.ds.dims[self.timename])+1) * sampling_interval
+        if sampling_interval_s is not None:
+            texact = t0 \
+                   + (np.arange(self.ds.dims[self.timename])+1) * sampling_interval_s
             self.ds = self.ds.assign_coords({self.timename: texact})
         if zexact is not None:
             self.ds = self.ds.assign_coords({self.heightname: zexact})
