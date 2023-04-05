@@ -44,7 +44,8 @@ class InputSounding(object):
 
 
     def integrate_column_wrf(self,verbose=False,Niter=10):
-        """Follow dyn_em/module_initialize_ideal.F (legacy code)
+        """Follow legacy get_sounding subroutine
+        from WRF dyn_em/module_initialize_ideal.F
 
         Notes:
         - `qvf` is not strictly correct as implemented in WRF ideal.exe
@@ -101,6 +102,10 @@ class InputSounding(object):
         for k in range(N-2,-1,-1):
             dz = self.z[k+1] - self.z[k]
             self.p[k] = self.p[k+1] + 0.5*dz*(self.rho[k]+self.rho[k+1])*g
+
+        # Note: WRF does not calculate dry density
+        self.rhod = np.zeros_like(self.rho)
+        self.rhod[:] = np.nan
 
         if verbose:
             ptmp = p0 * (R_d * self.rho * self.thm / p0)**1.4
