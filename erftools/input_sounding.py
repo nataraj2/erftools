@@ -32,6 +32,17 @@ class InputSounding(object):
         self.v  = init[:,4]
 
 
+    def interp_levels(self,z):
+        """Interpolate profile to specified levels"""
+        z = sorted(z)
+        assert (z[0] >= self.z[0]) and (z[-1] <= self.z[-1])
+        self.th = np.interp(z, self.z, self.th)
+        self.qv = np.interp(z, self.z, self.qv)
+        self.u  = np.interp(z, self.z, self.u )
+        self.v  = np.interp(z, self.z, self.v )
+        self.z  = z
+
+
     def integrate_column_wrf(self,verbose=False,Niter=10):
         """Follow dyn_em/module_initialize_ideal.F (legacy code)
 
