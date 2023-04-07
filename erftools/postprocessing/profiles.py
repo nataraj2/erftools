@@ -75,13 +75,15 @@ class AveragedProfiles(object):
         """Calculate time derivative, based on the given profile output
         interval.
         """
-        dt = self.ds.coords[self.timename][1] - ds.coords[self.timename][0]
-        print('output dt=',dt)
+        dt = self.ds.coords[self.timename][1] - self.ds.coords[self.timename][0]
+        print('dt=',dt)
         for varn in self.profile1vars[2:]:
             self.ds[f'{varn}/dt'] = self.ds[varn].diff(self.timename) / dt
 
-    def calc_gradz(self):
+    def calc_grad(self):
+        """Calculate vertical gradient"""
         dz = self.ds.coords[self.heightname][1] - ds.coords[self.heightname][0]
+        print('dz=',dz)
         for varn in self.profile1vars[2:]:
             self.ds[f'{varn}/dz'] = self.ds[varn].diff(self.heightname) / dz
 
