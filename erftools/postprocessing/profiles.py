@@ -20,15 +20,15 @@ class AveragedProfiles(object):
     """
     timename = 't' # 'time'
     heightname = 'z' # 'height'
-    profile1vars = [timename,heightname,'u','v','w','ρ','θ','e']
-    profile2vars = [timename,heightname,"u'u'", "u'v'", "u'w'",
-                                        "v'v'", "v'w'", "w'w'",
-                                        "θ'u'", "θ'v'", "θ'w'", "θ'θ'",
-                                        "k'u'", "k'v'", "k'w'",
-                                        "p'u'", "p'v'", "p'w'"]
-    profile3vars = [timename,heightname,'τ11','τ12','τ13',
-                                        'τ22','τ23','τ33',
-                                        'τθw','ε']
+    profile1vars = ['u','v','w','ρ','θ','e']
+    profile2vars = ["u'u'", "u'v'", "u'w'",
+                    "v'v'", "v'w'", "w'w'",
+                    "θ'u'", "θ'v'", "θ'w'", "θ'θ'",
+                    "k'u'", "k'v'", "k'w'",
+                    "p'u'", "p'v'", "p'w'"]
+    profile3vars = ['τ11','τ12','τ13',
+                    'τ22','τ23','τ33',
+                    'τθw','ε']
 
     def __init__(self, *args, t0=0.0, sampling_interval_s=None, zexact=None):
         """Load diagnostic profile data from 3 datafiles, provided as 
@@ -66,26 +66,29 @@ class AveragedProfiles(object):
         return df.loc[~isdup]
 
     def _load_profiles(self, mean_fpath, covar_fpath, sfs_fpath):
-        mean  = self._read_text_data(mean_fpath,  self.profile1vars)
-        covar = self._read_text_data(covar_fpath, self.profile2vars)
-        sfs   = self._read_text_data(sfs_fpath,   self.profile3vars)
+        mean  = self._read_text_data(mean_fpath,  [self.timename,self.heightname]+self.profile1vars)
+        covar = self._read_text_data(covar_fpath, [self.timename,self.heightname]+self.profile2vars)
+        sfs   = self._read_text_data(sfs_fpath,   [self.timename,self.heightname]+self.profile3vars)
         self.ds = pd.concat([mean,covar,sfs], axis=1).to_xarray()
 
-    def calc_ddt(self):
+    def calc_ddt(self,*args):
         """Calculate time derivative, based on the given profile output
         interval.
         """
         dt = self.ds.coords[self.timename][1] - self.ds.coords[self.timename][0]
         print('dt=',dt.values)
-        for varn in self.profile1vars[2:]:
-            self.ds[f'{varn}/dt'] = self.ds[varn].diff(self.timename) / dt
+        varlist = args if len(args) > 0 else self.profile1vars
+        for varn in varlist:
+            self.ds[f'd{varn}/dt'] = self.ds[varn].diff(self.timename) / dt
 
-    def calc_grad(self):
+    def calc_grad(self,*args):
         """Calculate vertical gradient"""
         dz = self.ds.coords[self.heightname][1] - self.ds.coords[self.heightname][0]
         print('dz=',dz.values)
-        for varn in self.profile1vars[2:]:
-            self.ds[f'{varn}/dz'] = self.ds[varn].diff(self.heightname) / dz
+        allvars = self.profile1vars + self.profile2vars + self.profile3vars
+        varlist = args if len(args) > 0 else allvars
+        for varn in varlist:
+            self.ds[f'd{varn}/dz'] = self.ds[varn].diff(self.heightname) / dz
 
     def calc_stress(self):
         """Calculate total stresses (note: τ are deviatoric stresses)"""
