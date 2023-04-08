@@ -30,10 +30,10 @@ class AveragedProfiles(object):
                                         'τ22','τ23','τ33',
                                         'τθw','ε']
 
-    def __init__(self, *args, sampling_interval=None, zexact=None):
+    def __init__(self, *args, t0=0.0, sampling_interval_s=None, zexact=None):
         """Load diagnostic profile data from 3 datafiles, provided as 
         separate args, a list, or a glob string. If provided, `zexact`
-        `sampling_interval` and/or `zexact` are used to override the
+        `sampling_interval_s` and/or `zexact` are used to override the
         time/height coordinate variable(s).
         """
         assert (len(args) == 1) or (len(args) == 3)
@@ -50,8 +50,9 @@ class AveragedProfiles(object):
         else:
             fpathlist = args
         self._load_profiles(*fpathlist)
-        if sampling_interval is not None:
-            texact = (np.arange(self.ds.dims[self.timename])+1) * sampling_interval
+        if sampling_interval_s is not None:
+            texact = t0 \
+                   + (np.arange(self.ds.dims[self.timename])+1) * sampling_interval_s
             self.ds = self.ds.assign_coords({self.timename: texact})
         if zexact is not None:
             self.ds = self.ds.assign_coords({self.heightname: zexact})
@@ -60,25 +61,29 @@ class AveragedProfiles(object):
         df = pd.read_csv(
             fpath, delim_whitespace=True,
             header=None, names=columns)
-        return df.set_index([self.timename,self.heightname])
+        df = df.set_index([self.timename,self.heightname])
+        isdup = df.index.duplicated(keep='last')
+        return df.loc[~isdup]
 
     def _load_profiles(self, mean_fpath, covar_fpath, sfs_fpath):
-        mean  = self._read_text_data(mean_fpath, self.profile1vars)
+        mean  = self._read_text_data(mean_fpath,  self.profile1vars)
         covar = self._read_text_data(covar_fpath, self.profile2vars)
-        sfs   = self._read_text_data(sfs_fpath, self.profile3vars)
+        sfs   = self._read_text_data(sfs_fpath,   self.profile3vars)
         self.ds = pd.concat([mean,covar,sfs], axis=1).to_xarray()
 
     def calc_ddt(self):
         """Calculate time derivative, based on the given profile output
         interval.
         """
-        dt = self.ds.coords[self.timename][1] - ds.coords[self.timename][0]
-        print('output dt=',dt)
+        dt = self.ds.coords[self.timename][1] - self.ds.coords[self.timename][0]
+        print('dt=',dt)
         for varn in self.profile1vars[2:]:
             self.ds[f'{varn}/dt'] = self.ds[varn].diff(self.timename) / dt
 
-    def calc_gradz(self):
+    def calc_grad(self):
+        """Calculate vertical gradient"""
         dz = self.ds.coords[self.heightname][1] - ds.coords[self.heightname][0]
+        print('dz=',dz)
         for varn in self.profile1vars[2:]:
             self.ds[f'{varn}/dz'] = self.ds[varn].diff(self.heightname) / dz
 
