@@ -76,14 +76,14 @@ class AveragedProfiles(object):
         interval.
         """
         dt = self.ds.coords[self.timename][1] - self.ds.coords[self.timename][0]
-        print('dt=',dt)
+        print('dt=',dt.values)
         for varn in self.profile1vars[2:]:
             self.ds[f'{varn}/dt'] = self.ds[varn].diff(self.timename) / dt
 
     def calc_grad(self):
         """Calculate vertical gradient"""
-        dz = self.ds.coords[self.heightname][1] - ds.coords[self.heightname][0]
-        print('dz=',dz)
+        dz = self.ds.coords[self.heightname][1] - self.ds.coords[self.heightname][0]
+        print('dz=',dz.values)
         for varn in self.profile1vars[2:]:
             self.ds[f'{varn}/dz'] = self.ds[varn].diff(self.heightname) / dz
 
