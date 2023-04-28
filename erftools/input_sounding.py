@@ -32,8 +32,20 @@ class InputSounding(object):
         self.v  = init[:,4]
 
 
+    def interp_levels(self,z):
+        """Interpolate profile to specified levels"""
+        z = sorted(z)
+        assert (z[0] >= self.z[0]) and (z[-1] <= self.z[-1])
+        self.th = np.interp(z, self.z, self.th)
+        self.qv = np.interp(z, self.z, self.qv)
+        self.u  = np.interp(z, self.z, self.u )
+        self.v  = np.interp(z, self.z, self.v )
+        self.z  = z
+
+
     def integrate_column_wrf(self,verbose=False,Niter=10):
-        """Follow dyn_em/module_initialize_ideal.F (legacy code)
+        """Follow legacy get_sounding subroutine
+        from WRF dyn_em/module_initialize_ideal.F
 
         Notes:
         - `qvf` is not strictly correct as implemented in WRF ideal.exe
@@ -90,6 +102,10 @@ class InputSounding(object):
         for k in range(N-2,-1,-1):
             dz = self.z[k+1] - self.z[k]
             self.p[k] = self.p[k+1] + 0.5*dz*(self.rho[k]+self.rho[k+1])*g
+
+        # Note: WRF does not calculate dry density
+        self.rhod = np.zeros_like(self.rho)
+        self.rhod[:] = np.nan
 
         if verbose:
             ptmp = p0 * (R_d * self.rho * self.thm / p0)**1.4
@@ -181,6 +197,22 @@ class InputSounding(object):
                 ptmp = p0 * (R_d * self.rhod[k] * self.th[k] / p0)**1.4
                 err = self.p[k] - ptmp
                 print(self.z[k], self.p[k], self.rhod[k], self.th[k], err)
+
+
+    def to_dataframe(self):
+        import pandas as pd
+        return pd.DataFrame(
+            {
+                'p': self.pm,
+                'rho': self.rho,
+                'theta_m': self.thm,
+                'p_d': self.p,
+                'rho_d': self.rhod,
+                'theta': self.th,
+                'u': self.u,
+                'v': self.v,
+            },
+            index=pd.Index(self.z,name='z'))
 
 
     def plot(self):
