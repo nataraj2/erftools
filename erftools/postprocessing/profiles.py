@@ -9,14 +9,14 @@ class AveragedProfiles(object):
         ```
         erf.v           = 1
         erf.data_log    = scalars.txt havg1.txt havg2.txt havg3.txt
-        erf.profile_int = 100  # output interval (optional)
+        erf.profile_int = 100  # output interval
         ```
-    All four filenames need to be specified to have complete averaged
-    profile data. The files include:
+    All three horizontal averaging files need to be specified to have complete
+    averaged profile data. The files include:
     1. Time history of surface quantities (u*, θ*, L)
     2. Time history of mean profiles (ubar, vbar, wbar, thetabar, ...)
-    3. Time history of covariance profiles (u'u', u'v', u'w', ...)
-    4. Time history of SFS profiles (tau11, tau12, tau13, ...)
+    3. Time history of resolved-scale stress profiles (u'u', u'v', u'w', ...)
+    4. Time history of subfilter-scale (SFS) stress profiles (tau11, tau12, tau13, ...)
     """
     timename = 't' # 'time'
     heightname = 'z' # 'height'
@@ -65,11 +65,11 @@ class AveragedProfiles(object):
         isdup = df.index.duplicated(keep='last')
         return df.loc[~isdup]
 
-    def _load_profiles(self, mean_fpath, covar_fpath, sfs_fpath):
-        mean  = self._read_text_data(mean_fpath,  [self.timename,self.heightname]+self.profile1vars)
-        covar = self._read_text_data(covar_fpath, [self.timename,self.heightname]+self.profile2vars)
-        sfs   = self._read_text_data(sfs_fpath,   [self.timename,self.heightname]+self.profile3vars)
-        self.ds = pd.concat([mean,covar,sfs], axis=1).to_xarray()
+    def _load_profiles(self, mean_fpath, Rres_fpath, Rsfs_fpath):
+        mean = self._read_text_data(mean_fpath, [self.timename,self.heightname]+self.profile1vars)
+        Rres = self._read_text_data(Rres_fpath, [self.timename,self.heightname]+self.profile2vars)
+        Rsfs = self._read_text_data(Rsfs_fpath, [self.timename,self.heightname]+self.profile3vars)
+        self.ds = pd.concat([mean,Rres,Rsfs], axis=1).to_xarray()
 
     def calc_ddt(self,*args):
         """Calculate time derivative, based on the given profile output
