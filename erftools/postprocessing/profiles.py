@@ -12,7 +12,7 @@ class AveragedProfiles(object):
         erf.profile_int = 100  # output interval
         ```
     All three horizontal averaging files need to be specified to have complete
-    averaged profile data. The files include:
+    averaged profile data. These text files include:
     1. Time history of surface quantities (u*, θ*, L)
     2. Time history of mean profiles (ubar, vbar, wbar, thetabar, ...)
     3. Time history of resolved-scale stress profiles (u'u', u'v', u'w', ...)
@@ -31,10 +31,23 @@ class AveragedProfiles(object):
                     'τθw','ε']
 
     def __init__(self, *args, t0=0.0, sampling_interval_s=None, zexact=None):
-        """Load diagnostic profile data from 3 datafiles, provided as 
-        separate args, a list, or a glob string. If provided, `zexact`
-        `sampling_interval_s` and/or `zexact` are used to override the
-        time/height coordinate variable(s).
+        """Load diagnostic profile data from 3 datafiles
+
+        Parameters
+        ----------
+        *args : list or glob string
+            Averaged profile datafiles to load
+        t0 : float, optional
+            With `sampling_interval_s`, used to overwrite the
+            timestamps in the text data to address issues with
+            insufficient precision
+        sampling_interval_s : float, optional
+            Overwrite the time dimension coordinate with
+            t0 + np.arange(Ntimes)*sampling_interval_s
+        zexact : array-like, optional
+            List of cell-centered heights in the computational
+            domain, used to overwrite the height dimension coordinate
+            and address issues with insufficient precision
         """
         assert (len(args) == 1) or (len(args) == 3)
         if len(args) == 1:
