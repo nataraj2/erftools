@@ -29,3 +29,5 @@ def getPgivenRTh(rhotheta, qv=0, precip=True):
         rhotheta_t = rhotheta*(1.0+qv);
         return p_0 * (R_t * rhotheta_t / p_0)**Gamma_t
 
+def getRhoThetagivenP(p):
+    return (p * p_0**(Gamma-1))**(1.0/Gamma) / R_d
