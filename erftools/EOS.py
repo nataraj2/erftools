@@ -31,3 +31,6 @@ def getPgivenRTh(rhotheta, qv=0, precip=True):
 
 def getRhoThetagivenP(p):
     return (p * p_0**(Gamma-1))**(1.0/Gamma) / R_d
+
+def getRhogivenThetaPress(theta, p, rdOcp=R_d/Cp_d, qv=0.0):
+    return p_0**rdOcp * p**(1.0/Gamma) / (R_d * theta * (1.0 + R_v/R_d*qv))
