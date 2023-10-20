@@ -82,6 +82,7 @@ class Column(object):
         self.t = np.array(times)
         tindex = pd.Index(times,name='time')
         self._df = pd.concat(dflist, axis=0, keys=tindex)
+        self.z = self._df.index.levels[1].values
 
     @property
     def df(self):
@@ -89,3 +90,6 @@ class Column(object):
             return self._df.xs(self.t[0],level='time')
         else:
             return self._df
+
+    def __getitem__(self,key):
+        return self.df[key]
