@@ -6,6 +6,7 @@ import yt
 yt.set_log_level('error')
 
 def load_pltfile_column(dpath,return_amrex_dataset=False):
+    """Extract column of data from (ilo,jlo)"""
     amrds = yt.load(dpath)
     # get vertical levels
     grid_spacing = (amrds.domain_right_edge.value
@@ -30,6 +31,14 @@ class Column(object):
     set up as a domain that has
         amr.n_cell = amr.blocking_factor amr.blocking_factor n_levels
         geometry.is_periodic = 1 1 0
+
+    The data are stored in a pandas dataframe with a time-height multiindex,
+    accessible by:
+        Column.df  # return Column._df (with multiindex) if multiple times were
+                   # loaded, otherwise a dataframe with height index
+        Column.t  # equivalent to Column._df.index.levels[0]
+        Column.z  # equivalent to Column._df.index.levels[1]
+        Column['x_velocity']  # shorthand for Column._df['x_velocity']
     """
     def __init__(self,pltfiles,**kwargs):
         """Read one or more pltfiles and convert to dataframe format
