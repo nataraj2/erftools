@@ -5,14 +5,23 @@ import pandas as pd
 import yt
 yt.set_log_level('error')
 
-def load_pltfile_column(dpath,return_amrex_dataset=False):
+def load_pltfile_column(dpath,
+                        zlevels=None,
+                        zlevels_stag=None,
+                        return_amrex_dataset=False):
     """Extract column of data from (ilo,jlo)"""
     amrds = yt.load(dpath)
-    # get vertical levels
     grid_spacing = (amrds.domain_right_edge.value
                     - amrds.domain_left_edge.value) / amrds.domain_dimensions
-    zlevels = 0.5*grid_spacing[2] \
-            + np.arange(amrds.domain_dimensions[2]) * grid_spacing[2]
+    # get vertical levels
+    if zlevels is not None:
+        assert len(zlevels) == amrds.domain_dimensions[2]
+    elif zlevels_stag is not None:
+        assert len(zlevels_stag) == amrds.domain_dimensions[2]+1
+        zlevels = 0.5 * (zlevels_stag[1:] + zlevels_stag[:-1])
+    else:
+        zlevels = 0.5*grid_spacing[2] \
+                + np.arange(amrds.domain_dimensions[2]) * grid_spacing[2]
     # extract column
     col_left_edge = amrds.domain_left_edge.value
     col_right_edge = [grid_spacing[0], grid_spacing[1], amrds.domain_right_edge.value[2]]
@@ -66,7 +75,7 @@ class Column(object):
             assert all([os.path.isdir(pltfile) for pltfile in pltfiles])
         self.pltfiles = pltfiles
         self._sort_pltfiles()
-        self._load_pltfile_wrapper()
+        self._load_pltfile_wrapper(**kwargs)
 
     def _sort_pltfiles(self):
         if any(['.old.' in dpath for dpath in self.pltfiles]):
@@ -79,12 +88,13 @@ class Column(object):
         sortorder = np.argsort(outputsteps)
         self.pltfiles = [pltfiles[i] for i in sortorder]
 
-    def _load_pltfile_wrapper(self):
+    def _load_pltfile_wrapper(self,**kwargs):
         dflist = []
         times = []
         for pltfile in self.pltfiles:
             print('\rLoading',pltfile,end='')
-            df,amrds = load_pltfile_column(pltfile, return_amrex_dataset=True)
+            df,amrds = load_pltfile_column(pltfile, return_amrex_dataset=True,
+                                           **kwargs)
             dflist.append(df)
             times.append(amrds.current_time.value.item())
         print('')
