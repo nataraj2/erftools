@@ -8,15 +8,19 @@ class AveragedProfiles(object):
     """Process text diagnostic profiles that were written out with:
         ```
         erf.v           = 1
-        erf.data_log    = scalars.txt havg1.txt havg2.txt havg3.txt
+        erf.data_log    = scalars.txt profiles1.txt profiles2.txt profiles3.txt
         erf.profile_int = 100  # output interval
         ```
-    All three horizontal averaging files need to be specified to have complete
-    averaged profile data. These text files include:
+    These text files include:
     1. Time history of surface quantities (u*, θ*, L)
     2. Time history of mean profiles (ubar, vbar, wbar, thetabar, ...)
     3. Time history of resolved-scale stress profiles (u'u', u'v', u'w', ...)
-    4. Time history of subfilter-scale (SFS) stress profiles (tau11, tau12, tau13, ...)
+    4. Time history of subfilter-scale (SFS) stress profiles (tau11, tau12,
+       tau13, ...)
+
+    All three horizontal-averaged profile output files need to be specified to
+    have complete averaged profile data. Note that AveragedProfiles does not
+    process the scalar surface time-history.
     """
     timename = 't' # 'time'
     heightname = 'z' # 'height'
