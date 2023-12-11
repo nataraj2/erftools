@@ -170,8 +170,8 @@ class InputSounding(object):
                 self.pm[k] = self.pm[k-1] \
                            - 0.5*dz*(self.rho[k] + self.rho[k-1])*CONST_GRAV
                 assert self.pm[k] > 0, 'too cold for chosen height'
-                self.rho[k] = 1. /
-                    ((R_d/p_0)*self.th[k]*qvf*((self.pm[k]/p_0)**cvpm))
+                self.rho[k] = 1. \
+                        / ((R_d/p_0)*self.th[k]*qvf*((self.pm[k]/p_0)**cvpm))
             self.thm[k] = self.th[k] * qvf
             if verbose:
                 ptmp = p_0 * (R_d * self.rho[k] * self.thm[k] / p_0)**Gamma
@@ -188,8 +188,8 @@ class InputSounding(object):
             for i in range(Niter):
                 self.p[k] = self.p[k+1] \
                           + 0.5*dz*(self.rhod[k] + self.rhod[k+1])*CONST_GRAV
-                self.rhod[k] = 1. /
-                    ((R_d/p_0)*self.th[k]*((self.p[k]/p_0)**cvpm)) 
+                self.rhod[k] = 1. \
+                    / ((R_d/p_0)*self.th[k]*((self.p[k]/p_0)**cvpm))
 
         if verbose:
             ptmp = p_0 * (R_d * self.rho * self.thm / p_0)**Gamma
