@@ -9,7 +9,17 @@ from .wrf.constants import rvovrd, cvpm
 class InputSounding(object):
 
     def __init__(self,fpath='input_sounding'):
-        """See WRF User's Guide for file format"""
+        """File format is described in the WRF User's Guide
+
+        > "The input_sounding file (already in appropriate case
+          directories) can be any set of levels that goes at least up to
+          the model top height in the namelist. The first line includes
+          the surface pressure (hPa), potential temperature (K) and
+          moisture mixing ratio (g/kg). Each subsequent line has five
+          input values: height (meters above sea-level), dry potential
+          temperature (K), vapor mixing ratio (g/kg), x-direction wind
+          component (m/s), and y-direction wind component (m/s)."
+        """
         with open(fpath,'r') as f:
             # The first line includes the surface pressure (hPa), potential
             # temperature (K) and moisture mixing ratio (g/kg).
