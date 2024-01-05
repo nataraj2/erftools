@@ -8,27 +8,42 @@ yt.set_log_level('error')
 def load_pltfile_column(dpath,
                         zlevels=None,
                         zlevels_stag=None,
-                        return_amrex_dataset=False):
+                        return_amrex_dataset=False,
+                        verbose=False):
     """Extract column of data from (ilo,jlo)"""
     amrds = yt.load(dpath)
     grid_spacing = (amrds.domain_right_edge.value
                     - amrds.domain_left_edge.value) / amrds.domain_dimensions
-    # get vertical levels
-    if zlevels is not None:
-        assert len(zlevels) == amrds.domain_dimensions[2]
-    elif zlevels_stag is not None:
-        assert len(zlevels_stag) == amrds.domain_dimensions[2]+1
-        zlevels = 0.5 * (zlevels_stag[1:] + zlevels_stag[:-1])
-    else:
-        zlevels = 0.5*grid_spacing[2] \
-                + np.arange(amrds.domain_dimensions[2]) * grid_spacing[2]
+
     # extract column
     col_left_edge = amrds.domain_left_edge.value
     col_right_edge = [grid_spacing[0], grid_spacing[1], amrds.domain_right_edge.value[2]]
     col = amrds.box(col_left_edge, col_right_edge)
+
     # get column values
     fields = [name for (dtype,name) in amrds.field_list if dtype=='boxlib']
     coldata = {field: col[field].value for field in fields}
+
+    # get vertical levels
+    if 'z_phys' in coldata.keys():
+        if verbose:
+            print('  using z levels from pltfile')
+        zlevels = coldata.pop('z_phys')
+    elif zlevels is not None:
+        if verbose:
+            print('  using specified z levels')
+        assert len(zlevels) == amrds.domain_dimensions[2]
+    elif zlevels_stag is not None:
+        if verbose:
+            print('  using specified z levels (staggered)')
+        assert len(zlevels_stag) == amrds.domain_dimensions[2]+1
+        zlevels = 0.5 * (zlevels_stag[1:] + zlevels_stag[:-1])
+    else:
+        if verbose:
+            print('  assuming uniformly spaced z levels')
+        zlevels = 0.5*grid_spacing[2] \
+                + np.arange(amrds.domain_dimensions[2]) * grid_spacing[2]
+
     df = pd.DataFrame(coldata, index=pd.Index(zlevels, name='height'))
     if return_amrex_dataset:
         return df, amrds
@@ -91,13 +106,16 @@ class Column(object):
     def _load_pltfile_wrapper(self,**kwargs):
         dflist = []
         times = []
+        multi = (len(self.pltfiles)>1) # verbose output for single file
+        verbose = kwargs.pop('verbose', ~multi) # allow override
+        end = '' if multi else '\n'
         for pltfile in self.pltfiles:
-            print('\rLoading',pltfile,end='')
+            print('\rLoading',pltfile,end=end)
             df,amrds = load_pltfile_column(pltfile, return_amrex_dataset=True,
-                                           **kwargs)
+                                           verbose=verbose, **kwargs)
             dflist.append(df)
             times.append(amrds.current_time.value.item())
-        print('')
+        if multi: print('')
         self.t = np.array(times)
         tindex = pd.Index(times,name='time')
         self._df = pd.concat(dflist, axis=0, keys=tindex)
