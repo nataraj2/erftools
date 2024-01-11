@@ -8,7 +8,15 @@ from .wrf.constants import rvovrd, cvpm
 
 class InputSounding(object):
 
-    def __init__(self,fpath='input_sounding'):
+    def __init__(self,fpath=None,
+                 p_surf=1e5,
+                 th_surf=300.,
+                 qv_surf=0.,
+                 z_profile=None,
+                 th_profile=None,
+                 qv_profile=None,
+                 u_profile=None,
+                 v_profile=None):
         """File format is described in the WRF User's Guide
 
         > "The input_sounding file (already in appropriate case
@@ -20,6 +28,33 @@ class InputSounding(object):
           temperature (K), vapor mixing ratio (g/kg), x-direction wind
           component (m/s), and y-direction wind component (m/s)."
         """
+        assert ((fpath is not None) or
+                ((z_profile is not None) and (th_profile is not None))), \
+                ('Need to specify the path to an input_sounding file '
+                 'or specify profiles of z, th(, qv=0, u=0, v=0)')
+        if fpath is not None:
+            self._load_wrf_ideal_sounding(fpath)
+        elif (z_profile is not None) and (th_profile is not None):
+            if qv_profile is None:
+                qv_profile = np.zeros_like(z_profile)
+            if u_profile is None:
+                u_profile = np.zeros_like(z_profile)
+            if v_profile is None:
+                v_profile = np.zeros_like(z_profile)
+            assert len(z_profile) \
+                    == len(th_profile) == len(qv_profile) \
+                    == len(u_profile) == len(v_profile)
+            self.z = z_profile
+            self.th = th_profile
+            self.qv = qv_profile
+            self.u = u_profile
+            self.v = v_profile
+            self.p_surf = p_surf
+            self.th_surf = th_surf
+            self.qv_surf = qv_surf
+
+
+    def _load_wrf_ideal_sounding(self,fpath):
         with open(fpath,'r') as f:
             # The first line includes the surface pressure (hPa), potential
             # temperature (K) and moisture mixing ratio (g/kg).
@@ -179,7 +214,10 @@ class InputSounding(object):
             for i in range(Niter):
                 self.pm[k] = self.pm[k-1] \
                            - 0.5*dz*(self.rho[k] + self.rho[k-1])*CONST_GRAV
-                assert self.pm[k] > 0, 'too cold for chosen height'
+                assert self.pm[k] > 0, 'too cold for chosen height' \
+                        f' (p[{k}]={self.pm[k]}' \
+                        f' rho[{k-1}]={self.rho[k-1]:g}' \
+                        f' rho[{k}]={self.rho[k]:g})'
                 self.rho[k] = 1. \
                         / ((R_d/p_0)*self.th[k]*qvf*((self.pm[k]/p_0)**cvpm))
             self.thm[k] = self.th[k] * qvf
