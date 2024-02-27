@@ -161,7 +161,25 @@ class InputSounding(object):
             print('error (dry)', np.max(np.abs(self.p - ptmp)))
 
 
-    def integrate_column(self,verbose=False,Niter=10):
+    def _iter_rho_p(self,rlo,plo,th,qv,dz,maxiter=100,tol=1e-14):
+        qvf = 1. + (rvovrd-1)*qv
+        r = rlo # guess for rho
+        for it in range(maxiter):
+            rlast = r
+            p = plo - 0.5*dz*(rlo + r)*CONST_GRAV
+            assert p > 0, 'too cold for chosen height' \
+                    f' (p={p:g}' \
+                    f' rho_lo={rlo:g}' \
+                    f' rho={r:g})'
+            r = 1. / ((R_d/p_0)*th*qvf*((p/p_0)**cvpm))
+            if np.abs(r-rlast) < tol:
+                #print(f'Converged after {it+1} iterations')
+                break
+        assert np.abs(r-rlast) < tol
+        return p, r, th*qvf
+
+
+    def integrate_column(self,verbose=False,**kwargs):
         """Based on dyn_em/module_initialize_ideal.F
 
         Here, the "moist" theta is virtual potential temperature:
@@ -192,14 +210,14 @@ class InputSounding(object):
         self.p = np.zeros(N)
 
         # 1. Integrate from surface to lowest level
-        qvf = 1. + (rvovrd-1)*self.qv[0]
-        self.rho[0] = rho_surf # guess
-        dz = self.z[0]
-        for i in range(Niter):
-            self.pm[0] = self.p_surf \
-                       - 0.5*dz*(rho_surf + self.rho[0])*CONST_GRAV
-            self.rho[0] = 1./((R_d/p_0)*self.th[0]*qvf*((self.pm[0]/p_0)**cvpm))
-        self.thm[0] = self.th[0] * qvf
+        self.pm[0],self.rho[0],self.thm[0] = self._iter_rho_p(
+            rho_surf, # guess
+            self.p_surf,
+            self.th[0], # cell value
+            self.qv[0], # cell value
+            self.z[0] # surface to first cell center
+        )
+
         if verbose:
             ptmp = p_0 * (R_d * self.rho[0] * self.thm[0] / p_0)**Gamma
             err = self.pm[0] - ptmp
@@ -208,36 +226,33 @@ class InputSounding(object):
 
         # 2. Integrate up the column
         for k in range(1,N):
-            self.rho[k] = self.rho[k-1] # guess
-            dz = self.z[k] - self.z[k-1]
-            qvf = 1. + (rvovrd-1)*self.qv[k]
-            for i in range(Niter):
-                self.pm[k] = self.pm[k-1] \
-                           - 0.5*dz*(self.rho[k] + self.rho[k-1])*CONST_GRAV
-                assert self.pm[k] > 0, 'too cold for chosen height' \
-                        f' (p[{k}]={self.pm[k]}' \
-                        f' rho[{k-1}]={self.rho[k-1]:g}' \
-                        f' rho[{k}]={self.rho[k]:g})'
-                self.rho[k] = 1. \
-                        / ((R_d/p_0)*self.th[k]*qvf*((self.pm[k]/p_0)**cvpm))
-            self.thm[k] = self.th[k] * qvf
+            self.pm[k],self.rho[k],self.thm[k] = self._iter_rho_p(
+                self.rho[k-1], # guess
+                self.pm[k-1],
+                self.th[k], # cell value
+                self.qv[k], # cell value
+                self.z[k] - self.z[k-1]
+            )
+
             if verbose:
                 ptmp = p_0 * (R_d * self.rho[k] * self.thm[k] / p_0)**Gamma
                 err = self.pm[k] - ptmp
                 print(self.z[k], self.pm[k], self.rho[k], self.thm[k], err)
+
         # we have the moist sounding at this point...
 
         # 3. Compute the dry sounding using p at the highest level from the
         #    moist sounding and integrating down
-        self.p[N-1] = self.pm[N-1] # no moisture at top of column
+        self.p[N-1] = self.pm[N-1] # assume no moisture at top of column
         self.rhod[N-1] = 1./((R_d/p_0)*self.th[N-1]*((self.p[N-1]/p_0)**cvpm))
         for k in range(N-2,-1,-1):
-            self.rhod[k] = self.rhod[k+1] # guess
-            for i in range(Niter):
-                self.p[k] = self.p[k+1] \
-                          + 0.5*dz*(self.rhod[k] + self.rhod[k+1])*CONST_GRAV
-                self.rhod[k] = 1. \
-                    / ((R_d/p_0)*self.th[k]*((self.p[k]/p_0)**cvpm))
+            self.p[k],self.rhod[k],_ = self._iter_rho_p(
+                self.rhod[k+1], # guess
+                self.p[k+1],
+                self.th[k], # cell value
+                0,
+                self.z[k] - self.z[k+1]
+            )
 
         if verbose:
             ptmp = p_0 * (R_d * self.rho * self.thm / p_0)**Gamma
