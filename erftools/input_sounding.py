@@ -161,7 +161,7 @@ class InputSounding(object):
             print('error (dry)', np.max(np.abs(self.p - ptmp)))
 
 
-    def _iter_rho_p(self,rlo,plo,th,qv,dz,maxiter=100,tol=1e-14):
+    def _iter_rho_p(self,dz,rlo,plo,th,qv=0,maxiter=100,tol=1e-14):
         qvf = 1. + (rvovrd-1)*qv
         r = rlo # guess for rho
         for it in range(maxiter):
@@ -211,11 +211,11 @@ class InputSounding(object):
 
         # 1. Integrate from surface to lowest level
         self.pm[0],self.rho[0],self.thm[0] = self._iter_rho_p(
+            self.z[0], # surface to first cell center
             rho_surf, # guess
             self.p_surf,
             self.th[0], # cell value
             self.qv[0], # cell value
-            self.z[0] # surface to first cell center
         )
 
         if verbose:
@@ -227,11 +227,11 @@ class InputSounding(object):
         # 2. Integrate up the column
         for k in range(1,N):
             self.pm[k],self.rho[k],self.thm[k] = self._iter_rho_p(
+                self.z[k] - self.z[k-1],
                 self.rho[k-1], # guess
                 self.pm[k-1],
                 self.th[k], # cell value
                 self.qv[k], # cell value
-                self.z[k] - self.z[k-1]
             )
 
             if verbose:
@@ -247,11 +247,10 @@ class InputSounding(object):
         self.rhod[N-1] = 1./((R_d/p_0)*self.th[N-1]*((self.p[N-1]/p_0)**cvpm))
         for k in range(N-2,-1,-1):
             self.p[k],self.rhod[k],_ = self._iter_rho_p(
+                self.z[k] - self.z[k+1],
                 self.rhod[k+1], # guess
                 self.p[k+1],
                 self.th[k], # cell value
-                0,
-                self.z[k] - self.z[k+1]
             )
 
         if verbose:
