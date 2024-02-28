@@ -53,4 +53,10 @@ class SurfaceHistory(object):
             ax.set_ylabel(varn)
             ax.grid()
         axs[-1].set_xlabel('simulation time [s]')
-        return fig,axs
+        if len(axs) == 1:
+            axs = axs[0]
+        return fig, axs
+
+    def ustar(self,Tavg=3600.0):
+        return self.df.loc[self.df.index[-1]-Tavg:,'ustar'].mean()
+
