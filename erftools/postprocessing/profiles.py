@@ -33,6 +33,10 @@ class AveragedProfiles(object):
     profile3vars = ['τ11','τ12','τ13',
                     'τ22','τ23','τ33',
                     'τθw','ε']
+    staggeredvars = ["w",
+                     "u'w'", "v'w'", "w'w'",
+                     "θ'w'", "p'w'", "k'w'",
+                     "τ13", "τ23"]
 
     def __init__(self, *args, t0=0.0, sampling_interval_s=None, zexact=None):
         """Load diagnostic profile data from 3 datafiles
@@ -73,6 +77,7 @@ class AveragedProfiles(object):
             self.ds = self.ds.assign_coords({self.timename: texact})
         if zexact is not None:
             self.ds = self.ds.assign_coords({self.heightname: zexact})
+        self._process_staggered()
 
     def _read_text_data(self, fpath, columns):
         df = pd.read_csv(
@@ -87,6 +92,37 @@ class AveragedProfiles(object):
         Rres = self._read_text_data(Rres_fpath, [self.timename,self.heightname]+self.profile2vars)
         Rsfs = self._read_text_data(Rsfs_fpath, [self.timename,self.heightname]+self.profile3vars)
         self.ds = pd.concat([mean,Rres,Rsfs], axis=1).to_xarray()
+
+    def _process_staggered(self):
+        topval = self.ds['θ'].isel(t=-1).values[-1]
+        if topval > 0:
+            # profiles are not on staggered grid
+            return
+        assert topval == 0
+        print('Staggered output detected')
+        zstag = self.ds.coords['z'].values
+        zcc = 0.5 * (zstag[1:] + zstag[:-1])
+        # collect cell-centered and staggered outputs that are available
+        stagvars = []
+        ccvars = []
+        for varn in self.ds.data_vars:
+            if varn in self.staggeredvars:
+                stagvars.append(varn)
+            else:
+                ccvars.append(varn)
+        # cell-centered: throw out values associated with highest z face, update coordinates
+        cc = self.ds[ccvars].isel(z=slice(0,-1))
+        cc = cc.assign_coords(z=zcc)
+        # average the staggered values to cell centers (destagger)
+        cc_destag = 0.5 * ( self.ds[stagvars].isel(z=slice(0,-1)).assign_coords(z=zcc)
+                          + self.ds[stagvars].isel(z=slice(1,None)).assign_coords(z=zcc))
+        cc_destag = cc_destag.assign_coords(z=zcc)
+        cc_destag = cc_destag.rename_vars({var:f'{var}_destag' for var in stagvars})
+        # associate staggered outputs with new coordinate
+        stag = self.ds[stagvars]
+        stag = stag.rename(z='zstag')
+        # combine into single dataset
+        self.ds = xr.merge([cc,cc_destag,stag])
 
     def calc_ddt(self,*args):
         """Calculate time derivative, based on the given profile output
