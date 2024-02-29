@@ -1,5 +1,3 @@
-import os
-import glob
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -20,8 +18,8 @@ class SurfaceHistory(object):
 
         Parameters
         ----------
-        *args : list or glob string
-            Averaged profile datafiles to load
+        histfile : string
+            Surface time history file to load
         t0 : float, optional
             With `dt`, used to overwrite the timestamps in the text data
             to address issues with insufficient precision
