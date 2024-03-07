@@ -87,11 +87,29 @@ class AveragedProfiles(object):
         isdup = df.index.duplicated(keep='last')
         return df.loc[~isdup]
 
-    def _load_profiles(self, mean_fpath, Rres_fpath, Rsfs_fpath):
-        mean = self._read_text_data(mean_fpath, [self.timename,self.heightname]+self.profile1vars)
-        Rres = self._read_text_data(Rres_fpath, [self.timename,self.heightname]+self.profile2vars)
-        Rsfs = self._read_text_data(Rsfs_fpath, [self.timename,self.heightname]+self.profile3vars)
-        self.ds = pd.concat([mean,Rres,Rsfs], axis=1).to_xarray()
+    def _load_profiles(self, mean_fpath, Rres_fpath=None, Rsfs_fpath=None):
+        alldata = []
+        idxvars = [self.timename, self.heightname]
+        assert os.path.isfile(mean_fpath)
+        print('Loading mean profiles')
+        mean = self._read_text_data(mean_fpath, idxvars+self.profile1vars)
+        alldata.append(mean)
+
+        # optional profile data
+        if os.path.isfile(Rres_fpath):
+            print('Loading resolved stress profiles')
+            Rres = self._read_text_data(Rres_fpath, idxvars+self.profile2vars)
+            alldata.append(Rres)
+        else:
+            print('No resolved stress data available')
+        if (Rsfs_fpath is not None) and os.path.isfile(Rsfs_fpath):
+            print('Loading SFS stress profiles')
+            Rsfs = self._read_text_data(Rsfs_fpath, idxvars+self.profile3vars)
+            alldata.append(Rsfs)
+        else:
+            print('No SFS data available')
+
+        self.ds = pd.concat(alldata, axis=1).to_xarray()
 
     def _process_staggered(self):
         topval = self.ds['θ'].isel(t=-1).values[-1]
