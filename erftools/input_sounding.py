@@ -161,7 +161,8 @@ class InputSounding(object):
             print('error (dry)', np.max(np.abs(self.p - ptmp)))
 
 
-    def _iter_rho_p(self,dz,rlo,plo,th,qv=0,maxiter=100,tol=1e-14):
+    def _iter_rho_p(self,dz,rlo,plo,th,qv=0,maxiter=100,tol=1e-15,
+                    verbose=False):
         qvf = 1. + (rvovrd-1)*qv
         r = rlo # guess for rho
         for it in range(maxiter):
@@ -172,10 +173,13 @@ class InputSounding(object):
                     f' rho_lo={rlo:g}' \
                     f' rho={r:g})'
             r = 1. / ((R_d/p_0)*th*qvf*((p/p_0)**cvpm))
-            if np.abs(r-rlast) < tol:
+            diff = np.abs(r - rlast)
+            if verbose:
+                print(it,p,r,diff)
+            if diff < tol:
                 #print(f'Converged after {it+1} iterations')
                 break
-        assert np.abs(r-rlast) < tol
+        assert np.abs(r - rlast) < tol
         return p, r, th*qvf
 
 
@@ -214,8 +218,8 @@ class InputSounding(object):
             self.z[0], # surface to first cell center
             rho_surf, # guess
             self.p_surf,
-            self.th[0], # cell value
-            self.qv[0], # cell value
+            self.th[0],
+            self.qv[0],
         )
 
         if verbose:
@@ -230,8 +234,8 @@ class InputSounding(object):
                 self.z[k] - self.z[k-1],
                 self.rho[k-1], # guess
                 self.pm[k-1],
-                self.th[k], # cell value
-                self.qv[k], # cell value
+                self.th[k],
+                self.qv[k],
             )
 
             if verbose:
@@ -250,7 +254,7 @@ class InputSounding(object):
                 self.z[k] - self.z[k+1],
                 self.rhod[k+1], # guess
                 self.p[k+1],
-                self.th[k], # cell value
+                self.th[k],
             )
 
         if verbose:
