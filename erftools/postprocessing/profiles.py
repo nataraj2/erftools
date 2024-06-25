@@ -159,6 +159,9 @@ class AveragedProfiles(object):
         # combine into single dataset
         self.ds = xr.merge([cc,cc_destag,stag])
 
+    def __getitem__(self,key):
+        return self.ds[key]
+
     def calc_ddt(self,*args):
         """Calculate time derivative, based on the given profile output
         interval.
