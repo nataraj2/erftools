@@ -38,12 +38,15 @@ class AveragedProfiles(object):
     """
     timename = 't' # 'time'
     heightname = 'z' # 'height'
-    profile1vars = ['u','v','w','ρ','θ','e']
+    profile1vars = ['u','v','w','ρ','θ','e',
+                    'Kturb','qv','qc',
+                    'qr','qi','qs','qg']
     profile2vars = ["u'u'", "u'v'", "u'w'",
                     "v'v'", "v'w'", "w'w'",
                     "θ'u'", "θ'v'", "θ'w'", "θ'θ'",
-                    "k'u'", "k'v'", "k'w'",
-                    "p'u'", "p'v'", "p'w'"]
+                    "ui'ui'u'", "ui'ui'v'", "ui'ui'w'",
+                    "p'u'", "p'v'", "p'w'",
+                    "w'qv'", "w'qc'", "w'qr'"]
     profile3vars = ['τ11','τ12','τ13',
                     'τ22','τ23','τ33',
                     'τθw','ε']
