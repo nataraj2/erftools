@@ -52,7 +52,9 @@ class AveragedProfiles(object):
                     'τθw','ε']
     staggeredvars = ["w",
                      "u'w'", "v'w'", "w'w'",
+                     "ui'ui'w'",
                      "θ'w'", "p'w'", "k'w'",
+                     "w'qv'", "w'qc'", "w'qr'",
                      "τ13", "τ23"]
 
     def __init__(self, *args, t0=0.0, sampling_interval_s=None, zexact=None):
