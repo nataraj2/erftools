@@ -34,3 +34,11 @@ def getRhoThetagivenP(p):
 
 def getRhogivenThetaPress(theta, p, rdOcp=R_d/Cp_d, qv=0.0):
     return p_0**rdOcp * p**(1.0/Gamma) / (R_d * theta * (1.0 + R_v/R_d*qv))
+
+def getTgivenRandRTh(rho, rhotheta, qv=0.0):
+    # rho and rhotheta are dry values. We should be using moist value of
+    # theta when using moisture, theta_m = theta * (1 + R_v/R_d*qv)
+    p_loc = p_0 * (R_d * rhotheta * (1.0 + R_v/R_d*qv) / p_0)**Gamma
+    # p = rho_d * R_d * T_v
+    # where T_v = T * (1 + R_v/R_d*qv)
+    return p_loc / (R_d * rho * (1.0 + R_v/R_d*qv) )
