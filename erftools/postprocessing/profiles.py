@@ -38,22 +38,28 @@ class AveragedProfiles(object):
     """
     timename = 't' # 'time'
     heightname = 'z' # 'height'
-    profile1vars = ['u','v','w','ρ','θ','e',
-                    'Kturb','qv','qc',
-                    'qr','qi','qs','qg']
+
+    # output columns -- these must match the output order
+    profile1vars = ['u','v','w',
+                    'ρ','θ','e','Kturb',
+                    'qv','qc','qr',
+                    'qi','qs','qg']
     profile2vars = ["u'u'", "u'v'", "u'w'",
                     "v'v'", "v'w'", "w'w'",
                     "θ'u'", "θ'v'", "θ'w'", "θ'θ'",
                     "ui'ui'u'", "ui'ui'v'", "ui'ui'w'",
                     "p'u'", "p'v'", "p'w'",
-                    "w'qv'", "w'qc'", "w'qr'"]
+                    "w'qv'", "w'qc'", "w'qr'",
+                    "θv'w'"]
     profile3vars = ['τ11','τ12','τ13',
                     'τ22','τ23','τ33',
                     'τθw','ε']
+
+    # these variables will be assigned the staggered vertical coordinate
     staggeredvars = ["w",
                      "u'w'", "v'w'", "w'w'",
                      "ui'ui'w'",
-                     "θ'w'", "p'w'", "k'w'",
+                     "θ'w'", "θv'w'", "p'w'", "k'w'",
                      "w'qv'", "w'qc'", "w'qr'",
                      "τ13", "τ23"]
 
