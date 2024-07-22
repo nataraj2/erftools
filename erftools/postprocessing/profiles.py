@@ -86,12 +86,12 @@ class AveragedProfiles(object):
         if len(args) == 1:
             if isinstance(args[0], list):
                 fpathlist = args[0]
-                assert len(fpathlist)==3, \
+                assert len(fpathlist)<=3, \
                     'Expected list of 3 separate profile datafiles'
             else:
                 assert isinstance(args[0], str)
                 fpathlist = sorted(glob.glob(args[0]))
-                assert len(fpathlist)==3, \
+                assert len(fpathlist)<=3, \
                     f'Expected to find 3 files, found {len(fpathlist)} {fpathlist}'
         else:
             fpathlist = args
@@ -112,7 +112,7 @@ class AveragedProfiles(object):
         isdup = df.index.duplicated(keep='last')
         return df.loc[~isdup]
 
-    def _load_profiles(self, mean_fpath, Rres_fpath=None, Rsfs_fpath=None):
+    def _load_profiles(self, mean_fpath, flux_fpath=None, sfs_fpath=None):
         alldata = []
         idxvars = [self.timename, self.heightname]
         assert os.path.isfile(mean_fpath)
@@ -121,16 +121,16 @@ class AveragedProfiles(object):
         alldata.append(mean)
 
         # optional profile data
-        if os.path.isfile(Rres_fpath):
-            print('  Loading resolved stress profiles')
-            Rres = self._read_text_data(Rres_fpath, idxvars+self.profile2vars)
-            alldata.append(Rres)
+        if (flux_fpath is not None) and os.path.isfile(flux_fpath):
+            print('  Loading resolved flux profiles')
+            fluxes = self._read_text_data(flux_fpath, idxvars+self.profile2vars)
+            alldata.append(fluxes)
         else:
             print('  No resolved stress data available')
-        if (Rsfs_fpath is not None) and os.path.isfile(Rsfs_fpath):
+        if (sfs_fpath is not None) and os.path.isfile(sfs_fpath):
             print('  Loading SFS stress profiles')
-            Rsfs = self._read_text_data(Rsfs_fpath, idxvars+self.profile3vars)
-            alldata.append(Rsfs)
+            sfs = self._read_text_data(sfs_fpath, idxvars+self.profile3vars)
+            alldata.append(sfs)
         else:
             print('  No SFS data available')
 
