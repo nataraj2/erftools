@@ -38,18 +38,29 @@ class AveragedProfiles(object):
     """
     timename = 't' # 'time'
     heightname = 'z' # 'height'
-    profile1vars = ['u','v','w','ρ','θ','e']
+
+    # output columns -- these must match the output order
+    profile1vars = ['u','v','w',
+                    'ρ','θ','e','Kturb',
+                    'qv','qc','qr',
+                    'qi','qs','qg']
     profile2vars = ["u'u'", "u'v'", "u'w'",
                     "v'v'", "v'w'", "w'w'",
                     "θ'u'", "θ'v'", "θ'w'", "θ'θ'",
-                    "k'u'", "k'v'", "k'w'",
-                    "p'u'", "p'v'", "p'w'"]
+                    "ui'ui'u'", "ui'ui'v'", "ui'ui'w'",
+                    "p'u'", "p'v'", "p'w'",
+                    "w'qv'", "w'qc'", "w'qr'",
+                    "θv'w'"]
     profile3vars = ['τ11','τ12','τ13',
                     'τ22','τ23','τ33',
                     'τθw','ε']
+
+    # these variables will be assigned the staggered vertical coordinate
     staggeredvars = ["w",
                      "u'w'", "v'w'", "w'w'",
-                     "θ'w'", "p'w'", "k'w'",
+                     "ui'ui'w'",
+                     "θ'w'", "θv'w'", "p'w'", "k'w'",
+                     "w'qv'", "w'qc'", "w'qr'",
                      "τ13", "τ23"]
 
     def __init__(self, *args, t0=0.0, sampling_interval_s=None, zexact=None):
@@ -75,12 +86,12 @@ class AveragedProfiles(object):
         if len(args) == 1:
             if isinstance(args[0], list):
                 fpathlist = args[0]
-                assert len(fpathlist)==3, \
+                assert len(fpathlist)<=3, \
                     'Expected list of 3 separate profile datafiles'
             else:
                 assert isinstance(args[0], str)
                 fpathlist = sorted(glob.glob(args[0]))
-                assert len(fpathlist)==3, \
+                assert len(fpathlist)<=3, \
                     f'Expected to find 3 files, found {len(fpathlist)} {fpathlist}'
         else:
             fpathlist = args
@@ -101,7 +112,7 @@ class AveragedProfiles(object):
         isdup = df.index.duplicated(keep='last')
         return df.loc[~isdup]
 
-    def _load_profiles(self, mean_fpath, Rres_fpath=None, Rsfs_fpath=None):
+    def _load_profiles(self, mean_fpath, flux_fpath=None, sfs_fpath=None):
         alldata = []
         idxvars = [self.timename, self.heightname]
         assert os.path.isfile(mean_fpath)
@@ -110,16 +121,16 @@ class AveragedProfiles(object):
         alldata.append(mean)
 
         # optional profile data
-        if os.path.isfile(Rres_fpath):
-            print('  Loading resolved stress profiles')
-            Rres = self._read_text_data(Rres_fpath, idxvars+self.profile2vars)
-            alldata.append(Rres)
+        if (flux_fpath is not None) and os.path.isfile(flux_fpath):
+            print('  Loading resolved flux profiles')
+            fluxes = self._read_text_data(flux_fpath, idxvars+self.profile2vars)
+            alldata.append(fluxes)
         else:
             print('  No resolved stress data available')
-        if (Rsfs_fpath is not None) and os.path.isfile(Rsfs_fpath):
+        if (sfs_fpath is not None) and os.path.isfile(sfs_fpath):
             print('  Loading SFS stress profiles')
-            Rsfs = self._read_text_data(Rsfs_fpath, idxvars+self.profile3vars)
-            alldata.append(Rsfs)
+            sfs = self._read_text_data(sfs_fpath, idxvars+self.profile3vars)
+            alldata.append(sfs)
         else:
             print('  No SFS data available')
 
@@ -155,6 +166,9 @@ class AveragedProfiles(object):
         stag = stag.rename(z='zstag')
         # combine into single dataset
         self.ds = xr.merge([cc,cc_destag,stag])
+
+    def __getitem__(self,key):
+        return self.ds[key]
 
     def calc_ddt(self,*args):
         """Calculate time derivative, based on the given profile output
