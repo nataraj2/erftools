@@ -1,6 +1,7 @@
 import numpy as np
 import xarray as xr
 import yt
+yt.set_log_level('error')
 
 
 xyz = ['x','y','z']
@@ -90,3 +91,13 @@ class Plotfile(object):
         return ds.transpose('x','y','z')
 
 
+def calc_cloud_cover(pltfile):
+    ds = yt.load(pltfile)
+    lvl0 = ds.covering_grid(level=0,
+                            left_edge=ds.domain_left_edge,
+                            dims=ds.domain_dimensions)
+    qc = lvl0['qc'].value
+    has_cloud = (np.max(qc,axis=2) > 0)
+    nx,ny,_ = ds.domain_dimensions
+    cloud_cover = np.count_nonzero(has_cloud) / (nx*ny)
+    return float(ds.current_time), cloud_cover
