@@ -4,20 +4,6 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-def destagger(da):
-    if 'zstag' not in da.dims:
-        print('Staggered dimension not found')
-        return da
-    dims = list(da.dims)
-    for i,dim in enumerate(dims):
-        if dim=='zstag':
-            dims[i] = 'z'
-    zstag = da.coords['zstag'].values
-    z = 0.5*(zstag[1:] + zstag[:-1])
-    vals = 0.5*(da.isel(zstag=slice(0,  -1)).values +
-                da.isel(zstag=slice(1,None)).values)
-    return xr.DataArray(vals,coords={'z':z},dims=dims,name=da.name)
-
 class AveragedProfiles(object):
     """Process text diagnostic profiles that were written out with:
         ```
