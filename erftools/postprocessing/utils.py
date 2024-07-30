@@ -1,6 +1,6 @@
 import xarray as xr
 
-def stagger_field(ds,field,surfval=0.0):
+def stagger_profile(ds,field,surfval=0.0):
     """Interpolate cell-centered field to staggered z locations on the
     interior; extrapolate to domain top; and set the surface value.
     """
