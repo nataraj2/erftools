@@ -53,7 +53,7 @@ class AveragedProfiles(object):
                     "θv'w'"]
     profile3vars = ['τ11','τ12','τ13',
                     'τ22','τ23','τ33',
-                    'τθw','ε']
+                    'τθw', "τqvw", "τqcw",'ε']
 
     # these variables will be assigned the staggered vertical coordinate
     staggeredvars = ["w",
@@ -61,7 +61,8 @@ class AveragedProfiles(object):
                      "ui'ui'w'",
                      "θ'w'", "θv'w'", "p'w'", "k'w'",
                      "w'qv'", "w'qc'", "w'qr'",
-                     "τ13", "τ23"]
+                     "τ13", "τ23",
+                     "τθw", "τqvw", "τqcw"]
 
     def __init__(self, *args, t0=0.0, sampling_interval_s=None, zexact=None):
         """Load diagnostic profile data from 3 datafiles
