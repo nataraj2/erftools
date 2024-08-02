@@ -4,20 +4,6 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-def destagger(da):
-    if 'zstag' not in da.dims:
-        print('Staggered dimension not found')
-        return da
-    dims = list(da.dims)
-    for i,dim in enumerate(dims):
-        if dim=='zstag':
-            dims[i] = 'z'
-    zstag = da.coords['zstag'].values
-    z = 0.5*(zstag[1:] + zstag[:-1])
-    vals = 0.5*(da.isel(zstag=slice(0,  -1)).values +
-                da.isel(zstag=slice(1,None)).values)
-    return xr.DataArray(vals,coords={'z':z},dims=dims,name=da.name)
-
 class AveragedProfiles(object):
     """Process text diagnostic profiles that were written out with:
         ```
@@ -53,7 +39,7 @@ class AveragedProfiles(object):
                     "θv'w'"]
     profile3vars = ['τ11','τ12','τ13',
                     'τ22','τ23','τ33',
-                    'τθw','ε']
+                    'τθw', "τqvw", "τqcw",'ε']
 
     # these variables will be assigned the staggered vertical coordinate
     staggeredvars = ["w",
@@ -61,7 +47,8 @@ class AveragedProfiles(object):
                      "ui'ui'w'",
                      "θ'w'", "θv'w'", "p'w'", "k'w'",
                      "w'qv'", "w'qc'", "w'qr'",
-                     "τ13", "τ23"]
+                     "τ13", "τ23",
+                     "τθw", "τqvw", "τqcw"]
 
     def __init__(self, *args, t0=0.0, sampling_interval_s=None, zexact=None):
         """Load diagnostic profile data from 3 datafiles
@@ -116,23 +103,23 @@ class AveragedProfiles(object):
         alldata = []
         idxvars = [self.timename, self.heightname]
         assert os.path.isfile(mean_fpath)
-        print('  Loading mean profiles')
+        print('Loading mean profiles from',mean_fpath)
         mean = self._read_text_data(mean_fpath, idxvars+self.profile1vars)
         alldata.append(mean)
 
         # optional profile data
         if (flux_fpath is not None) and os.path.isfile(flux_fpath):
-            print('  Loading resolved flux profiles')
+            print('Loading resolved flux profiles from',flux_fpath)
             fluxes = self._read_text_data(flux_fpath, idxvars+self.profile2vars)
             alldata.append(fluxes)
         else:
-            print('  No resolved stress data available')
+            print('No resolved stress data available')
         if (sfs_fpath is not None) and os.path.isfile(sfs_fpath):
-            print('  Loading SFS stress profiles')
+            print('Loading SFS stress profiles from',sfs_fpath)
             sfs = self._read_text_data(sfs_fpath, idxvars+self.profile3vars)
             alldata.append(sfs)
         else:
-            print('  No SFS data available')
+            print('No SFS data available')
 
         self.ds = pd.concat(alldata, axis=1).to_xarray()
 
@@ -142,7 +129,7 @@ class AveragedProfiles(object):
             # profiles are not on staggered grid
             return
         assert topval == 0
-        print('Staggered output detected')
+        print('**Staggered output detected**')
         zstag = self.ds.coords['z'].values
         zcc = 0.5 * (zstag[1:] + zstag[:-1])
         # collect cell-centered and staggered outputs that are available
