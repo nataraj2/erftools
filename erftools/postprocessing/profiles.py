@@ -27,7 +27,8 @@ class AveragedProfiles(object):
 
     # output columns -- these must match the output order
     profile1vars = ['u','v','w',
-                    'ρ','θ','e','Kturb',
+                    'ρ','θ','e',
+                    'Kmv','Khv',
                     'qv','qc','qr',
                     'qi','qs','qg']
     profile2vars = ["u'u'", "u'v'", "u'w'",
