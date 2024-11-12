@@ -27,8 +27,7 @@ class SurfaceHistory(object):
             Overwrite the time dimension coordinate with
             t0 + np.arange(Ntimes)*dt
         """
-        self.df = pd.read_csv(histfile, delim_whitespace=True,
-                              names=self.surfvars)
+        self.df = pd.read_csv(histfile, sep='\s+', names=self.surfvars)
         self.df = self.df.drop_duplicates().set_index('t')
         if dt is not None:
             dt0 = surf['time'].iloc[0]

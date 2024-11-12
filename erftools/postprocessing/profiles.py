@@ -93,9 +93,7 @@ class AveragedProfiles(object):
         self._process_staggered()
 
     def _read_text_data(self, fpath, columns):
-        df = pd.read_csv(
-            fpath, delim_whitespace=True,
-            header=None, names=columns)
+        df = pd.read_csv(fpath, sep='\s+', header=None, names=columns)
         df = df.set_index([self.timename,self.heightname])
         isdup = df.index.duplicated(keep='last')
         return df.loc[~isdup]
