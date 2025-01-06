@@ -51,7 +51,8 @@ class AveragedProfiles(object):
                      "τ13", "τ23",
                      "τθw", "τqvw", "τqcw"]
 
-    def __init__(self, *args, t0=0.0, sampling_interval_s=None, zexact=None):
+    def __init__(self, *args, t0=0.0, sampling_interval_s=None, zexact=None,
+                 timedelta=False,resample=None):
         """Load diagnostic profile data from 3 datafiles
 
         Parameters
@@ -69,13 +70,18 @@ class AveragedProfiles(object):
             List of cell-centered heights in the computational
             domain, used to overwrite the height dimension coordinate
             and address issues with insufficient precision
+        timedelta : bool, optional
+            If true, convert times to a TimedeltaIndex
+        resample : str, optional
+            Calculate rolling mean with given interval; implies
+            timedelta=True
         """
         assert (len(args) == 1) or (len(args) == 3)
         if len(args) == 1:
-            if isinstance(args[0], list):
+            if isinstance(args[0], (list,tuple)):
                 fpathlist = args[0]
                 assert len(fpathlist)<=3, \
-                    'Expected list of 3 separate profile datafiles'
+                    'Expected list of 1-3 separate profile datafiles'
             else:
                 assert isinstance(args[0], str)
                 fpathlist = sorted(glob.glob(args[0]))
@@ -88,12 +94,20 @@ class AveragedProfiles(object):
             texact = t0 \
                    + (np.arange(self.ds.dims[self.timename])+1) * sampling_interval_s
             self.ds = self.ds.assign_coords({self.timename: texact})
+        if timedelta or (resample is not None):
+            td = pd.to_timedelta(self.ds.coords[self.timename],unit='s')
+            self.ds = self.ds.assign_coords({self.timename: td})
+            if resample:
+                assert isinstance(resample, str)
+                self.ds = self.ds.resample({self.timename: resample}).mean()
         if zexact is not None:
             self.ds = self.ds.assign_coords({self.heightname: zexact})
         self._process_staggered()
 
     def _read_text_data(self, fpath, columns):
         df = pd.read_csv(fpath, sep='\s+', header=None, names=columns)
+        if np.any(df.duplicated(self.timename)):
+            print('Note: One or more restarts found, loading the latest')
         df = df.set_index([self.timename,self.heightname])
         isdup = df.index.duplicated(keep='last')
         return df.loc[~isdup]
@@ -120,6 +134,13 @@ class AveragedProfiles(object):
         else:
             print('No SFS data available')
 
+        # trim dataframes (to handle data loading when simulation is still
+        # running and the profile datafiles have different lengths)
+        tmax = alldata[0].index.levels[0][-1]
+        for i,df in enumerate(alldata):
+            alldata[i] = df.loc[(slice(0,tmax),slice(None)),:]
+
+        # create xarray dataset
         self.ds = pd.concat(alldata, axis=1).to_xarray()
 
     def _process_staggered(self):
@@ -127,7 +148,7 @@ class AveragedProfiles(object):
         if topval > 0:
             # profiles are not on staggered grid
             return
-        assert topval == 0
+        assert topval == 0, f'Found θ[k=-1] = {topval}?!'
         print('**Staggered output detected**')
         zstag = self.ds.coords['z'].values
         zcc = 0.5 * (zstag[1:] + zstag[:-1])
@@ -153,6 +174,18 @@ class AveragedProfiles(object):
         # combine into single dataset
         self.ds = xr.merge([cc,cc_destag,stag])
 
+    @property
+    def t(self):
+        return self.ds.coords['t']
+
+    @property
+    def z(self):
+        return self.ds.coords['z']
+
+    @property
+    def zstag(self):
+        return self.ds.coords['zstag']
+
     def __getitem__(self,key):
         return self.ds[key]
 
@@ -175,15 +208,27 @@ class AveragedProfiles(object):
         for varn in varlist:
             self.ds[f'd{varn}/dz'] = self.ds[varn].diff(self.heightname) / dz
 
-    def calc_stress(self):
-        """Calculate total stresses (note: τ are deviatoric stresses)"""
+    def calc_stress(self,check=True):
+        """Calculate total stresses and fluxes (note: τ are deviatoric stresses)
+
+        If check==True, assert that the SFS stress tensor is traceless
+        """
         trace = self.ds['τ11'] + self.ds['τ22'] + self.ds['τ33']
-        assert np.abs(trace).max() < 1e-14
+        if check:
+            assert np.abs(trace).max() < 1e-8, \
+                    f'SFS stresses do not sum to zero: {np.abs(trace).max()}'
         self.ds['uu_tot'] = self.ds["u'u'"] + self.ds['τ11'] + 2./3.*self.ds['e']
         self.ds['vv_tot'] = self.ds["v'v'"] + self.ds['τ22'] + 2./3.*self.ds['e']
-        self.ds['ww_tot'] = self.ds["w'w'"] + self.ds['τ33'] + 2./3.*self.ds['e']
+        try:
+            # if output is staggered, w'w' are on staggered but τ33 and e are
+            # unstaggered
+            ww = self.ds["w'w'_destag"]
+        except KeyError:
+            ww = self.ds["w'w'"]
+        self.ds['ww_tot'] = ww + self.ds['τ33'] + 2./3.*self.ds['e']
         self.ds['uv_tot'] = self.ds["u'v'"] + self.ds['τ12']
         self.ds['uw_tot'] = self.ds["u'w'"] + self.ds['τ13']
         self.ds['vw_tot'] = self.ds["v'w'"] + self.ds['τ23']
-        self.ds['ustar'] = (self.ds['uw_tot']**2 + self.ds['vw_tot']**2)**0.25
-        self.ds['hfx'] = self.ds["θ'w'"] + self.ds['τθw']
+        self.ds['ustar_tot'] = (  self.ds['uw_tot']**2
+                                + self.ds['vw_tot']**2)**0.25
+        self.ds['hfx_tot'] = self.ds["θ'w'"] + self.ds['τθw']

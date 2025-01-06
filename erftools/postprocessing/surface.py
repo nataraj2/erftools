@@ -13,7 +13,8 @@ class SurfaceHistory(object):
     heightname = 'z' # 'height'
     surfvars = ['t','ustar','tstar','L']
 
-    def __init__(self, histfile, t0=0.0, dt=None):
+    def __init__(self, histfile, t0=0.0, dt=None, timedelta=False,
+                 resample=None):
         """Load diagnostic profile data from 3 datafiles
 
         Parameters
@@ -26,27 +27,44 @@ class SurfaceHistory(object):
         dt : float, optional
             Overwrite the time dimension coordinate with
             t0 + np.arange(Ntimes)*dt
+        timedelta : bool, optional
+            If true, convert time index to a TimedeltaIndex
+        resample : str, optional
+            Calculate rolling mean with given interval; implies
+            timedelta=True
         """
-        self.df = pd.read_csv(histfile, sep='\s+', names=self.surfvars)
-        self.df = self.df.drop_duplicates().set_index('t')
+        df = pd.read_csv(histfile, sep='\s+', names=self.surfvars)
+        if np.any(df.duplicated('t')):
+            print('Note: One or more restarts found in the history file,' \
+                  ' loading the latest')
+        df = df.drop_duplicates('t')
         if dt is not None:
-            dt0 = surf['time'].iloc[0]
+            dt0 = df['t'].iloc[0]
             if not dt==dt0:
                 print('Warning: inconsistent specified dt and first step',dt,dt0)
-            self.df = self.df.reset_index()
-            self.df['t'] = t0 + np.arange(1,len(self.df)+1)*dt
-            self.df = self.df.set_index('t')
+            df['t'] = t0 + (np.arange(len(df))+1)*dt
+        if timedelta or (resample is not None):
+            self.Tmax = df['t'].iloc[-1]
+            df['t'] = pd.to_timedelta(df['t'],unit='s')
+        df = df.set_index('t')
+        if resample:
+            assert isinstance(resample, str)
+            df = df.resample(resample).mean()
+        self.df = df
 
-    def plot(self,*args):
+    def plot(self,*args,**plot_kwargs):
         """Quick plotting function"""
         varns = self.surfvars[1:] if (len(args) == 0) else args
         if isinstance(varns,str):
             varns = [varns]
+        tidx = self.df.index
+        if isinstance(self.df.index, pd.TimedeltaIndex):
+            tidx = tidx.total_seconds()
         fig,axs = plt.subplots(nrows=len(varns),figsize=(5,2.5*len(varns)))
         if len(varns) == 1:
             axs = [axs]
         for varn,ax in zip(varns,axs):
-            ax.plot(self.df.index, self.df[varn])
+            ax.plot(tidx, self.df[varn], **plot_kwargs)
             ax.set_ylabel(varn)
             ax.grid()
         axs[-1].set_xlabel('simulation time [s]')
@@ -55,5 +73,10 @@ class SurfaceHistory(object):
         return fig, axs
 
     def ustar(self,Tavg=3600.0):
-        return self.df.loc[self.df.index[-1]-Tavg:,'ustar'].mean()
+        """Get final time-averaged friction velocity"""
+        if isinstance(self.df.index, pd.TimedeltaIndex):
+            tstart = pd.to_timedelta(self.Tmax - Tavg, unit='s')
+        else:
+            tstart = self.df.index[-1] - Tavg
+        return self.df.loc[tstart:,'ustar'].mean()
 
