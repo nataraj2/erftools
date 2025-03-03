@@ -388,7 +388,7 @@ class NativeHRRR(object):
         if not inplace:
             return ds
 
-    def interp(self,name,xi,yi,dtype=float):
+    def interpxy(self,name,xi,yi,dtype=float):
         """Linearly interpolate to points xi, yi"""
         da = self.ds[name].astype(dtype)
         xdim = [dim for dim in da.dims if dim.startswith('west_east')][0]
@@ -464,8 +464,8 @@ class NativeHRRR(object):
         inp['Times'] = bytes(self.datetime.strftime('%Y-%m-%d_%H:%M:%S'),'utf-8')
 
         # interpolate staggered velocity fields
-        Ugrid = self.interp('U', self.xg_u, self.yg_u, dtype=dtype)
-        Vgrid = self.interp('V', self.xg_v, self.yg_v, dtype=dtype)
+        Ugrid = self.interpxy('U', self.xg_u, self.yg_u, dtype=dtype)
+        Vgrid = self.interpxy('V', self.xg_v, self.yg_v, dtype=dtype)
         inp['U'] = Ugrid.rename(west_east='west_east_stag')
         inp['V'] = Vgrid.rename(south_north='south_north_stag')
 
@@ -475,6 +475,7 @@ class NativeHRRR(object):
             'ALB',
             'AL',
             'T',
+            'THM',
             'PH',
             'PHB',
             'PB',
@@ -487,12 +488,13 @@ class NativeHRRR(object):
             'QRAIN',
         ]
         for varn in unstag_interp_vars:
-            inp[varn] = self.interp(varn, self.xg, self.yg, dtype=dtype)
+            inp[varn] = self.interpxy(varn, self.xg, self.yg, dtype=dtype)
 
         # these are already on the output grid
-        inp['MAPFAC_U'] = (('south_north', 'west_east_stag'), msf_u.astype(dtype))
-        inp['MAPFAC_V'] = (('south_north_stag', 'west_east'), msf_v.astype(dtype))
-        inp['MAPFAC_M'] = (('south_north', 'west_east'), msf.astype(dtype))
+        # note: MAPFAC_U == MAPFAC_UX == MAPFAC_UY, etc
+        inp['MAPFAC_UY'] = (('south_north', 'west_east_stag'), msf_u.astype(dtype))
+        inp['MAPFAC_VY'] = (('south_north_stag', 'west_east'), msf_v.astype(dtype))
+        inp['MAPFAC_MY'] = (('south_north', 'west_east'), msf.astype(dtype))
 
         # these only vary with height, no horizontal interp needed
         inp['C1H'] = self.ds['C1H'].astype(dtype)
@@ -547,8 +549,8 @@ class NativeHRRR(object):
             ds = xr.Dataset()
 
             # interpolate staggered velocity fields
-            Ugrid = self.interp('U', self.xg_u[*idxs], self.yg_u[*idxs], dtype=dtype)
-            Vgrid = self.interp('V', self.xg_v[*idxs], self.yg_v[*idxs], dtype=dtype)
+            Ugrid = self.interpxy('U', self.xg_u[*idxs], self.yg_u[*idxs], dtype=dtype)
+            Vgrid = self.interpxy('V', self.xg_v[*idxs], self.yg_v[*idxs], dtype=dtype)
             ds['U'] = Ugrid.rename(west_east='west_east_stag')
             ds['V'] = Vgrid.rename(south_north='south_north_stag')
 
@@ -565,7 +567,7 @@ class NativeHRRR(object):
                 'QRAIN',
             ]
             for varn in unstag_interp_vars:
-                ds[varn] = self.interp(varn, self.xg[*idxs], self.yg[*idxs], dtype=dtype)
+                ds[varn] = self.interpxy(varn, self.xg[*idxs], self.yg[*idxs], dtype=dtype)
 
             # setup map scale factors
             sn_ew_idxs = idxs[::-1]
