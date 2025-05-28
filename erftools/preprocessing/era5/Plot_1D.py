@@ -15,7 +15,7 @@ def plot_1d(temp_3d, pressure_3d, theta_3d, qv_3d, qsat_3d, z_grid, k_to_delete)
 	plt.xlabel('T (K)',fontsize=15)
 	plt.ylabel(r'$z$ (m)',fontsize=15)
 
-	dirname = "./erftools/preprocessing/era5/TypicalAtmosphereData/"
+	dirname = "./TypicalAtmosphereData/"
 	temperature_filename = dirname + "temp_vs_z_actual.txt"
 
 	data = np.loadtxt(temperature_filename)
@@ -35,7 +35,7 @@ def plot_1d(temp_3d, pressure_3d, theta_3d, qv_3d, qsat_3d, z_grid, k_to_delete)
 	plt.xlabel('p (mbar)',fontsize=15)
 	plt.ylabel(r'$z$ (m)',fontsize=15)
 
-	dirname = "./erftools/preprocessing/era5/TypicalAtmosphereData/"
+	dirname = "./TypicalAtmosphereData/"
 	pressure_filename = dirname + "pressure_vs_z_actual.txt"
 
 	data = np.loadtxt(pressure_filename)
@@ -56,7 +56,7 @@ def plot_1d(temp_3d, pressure_3d, theta_3d, qv_3d, qsat_3d, z_grid, k_to_delete)
 	plt.xlabel(r'$\theta$ (K)',fontsize=15)
 	plt.ylabel(r'$z$ (m)',fontsize=15)
 
-	dirname = "./erftools/preprocessing/era5/TypicalAtmosphereData/"
+	dirname = "./TypicalAtmosphereData/"
 	theta_filename = dirname + "theta_vs_z_actual.txt"
 
 	data = np.loadtxt(theta_filename)

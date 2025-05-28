@@ -12,6 +12,8 @@ from erftools.preprocessing import write_binary_vtk_structured_grid
 from erftools.preprocessing import write_binary_vtk_cartesian
 from erftools.preprocessing import plot_1d
 
+
+
 #from IO import *
 #from Plot_1D import plot_1d
 #from Download_ERA5Data import *
@@ -203,7 +205,7 @@ def ReadERA5_3DData(file_path, is_IC):
 
 	print("size is ", len(qv_3d_hr3))
 	
-	dirname = "./erftools/preprocessing/era5/TypicalAtmosphereData/"
+	dirname = "./TypicalAtmosphereData/"
 	pressure_filename = dirname + "pressure_vs_z_actual.txt"
 
 	pressure_typical = np.loadtxt(pressure_filename)
