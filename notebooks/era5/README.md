@@ -17,7 +17,7 @@ area: 50,-130,10,-50
 Note: The geographical area is specified as latitude maximum, longitude minimum, latitude minimum, longitude maximum.
 
 3. `python3 ReadERA5DataAndWriteERF_IC.py <input_file>`   
-If any packages are missing, install them using `pip install <package>`
+The `input_file` is the text file in step 2. If any packages are missing, install them using `pip install <package>`
 
 4. The output VTK files for visualization is written into a directory `Output`. The initial condition binary file (`*bin`) for ERF   
 is also written into `Output`.
