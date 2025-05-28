@@ -1,6 +1,6 @@
 import sys
+from Download_ERA5Data import Download_ERA5_Data
 from ReadERA5DataAndWriteERF_IC import ReadERA5_3DData
-from Download_ERA5Data import *
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
@@ -8,7 +8,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
 input_filename = sys.argv[1]
-filename  = download_era5_data(input_filename);
+filename  = Download_ERA5_Data(input_filename);
 print("Filename is ", filename);
 
 file_paths = [filename]
@@ -18,6 +18,5 @@ count = 0;
 is_IC = True
 for file_path in file_paths:
     print(f"Processing file: {file_path}")
-    #ReadERA5_SurfaceData("Laura_SurfaceData.grib", is_IC)
     ReadERA5_3DData(file_path, is_IC)
     is_IC = False

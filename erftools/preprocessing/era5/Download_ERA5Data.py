@@ -16,7 +16,7 @@ def read_user_input(filename):
                 inputs[key] = [value]
     return inputs
 
-def download_era5_data(inputs):
+def Download_ERA5_Data(inputs):
 
     # Load values from user input file
     user_inputs = read_user_input(inputs)
