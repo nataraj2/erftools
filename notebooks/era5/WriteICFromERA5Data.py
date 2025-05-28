@@ -8,7 +8,7 @@ from erftools.preprocessing import ReadERA5_3DData
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python3 download_era5.py <input_filename>")
+        print("Usage: python3 WriteICFromERA5Data.py <input_filename>")
         sys.exit(1)
 
 input_filename = sys.argv[1]
