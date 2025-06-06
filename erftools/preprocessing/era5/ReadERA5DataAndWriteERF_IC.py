@@ -1,7 +1,7 @@
 import pygrib
 import numpy as np
 import struct
-from pyproj import Proj
+from pyproj import Proj, Transformer, CRS
 import matplotlib.pyplot as plt
 import sys
 import os
@@ -195,11 +195,13 @@ def ReadERA5_3DData(file_path, is_IC):
 	x_grid, y_grid = np.meshgrid(domain_lons, domain_lats)
 	lon_grid, lat_grid = np.meshgrid(domain_lons, domain_lats)
 
-	utm_zone = calculate_utm_zone(-90.50399843097345)
-	utm_proj = Proj(proj='utm', zone=utm_zone, ellps='WGS84')
+	lambert_conformal = CRS.from_proj4(
+    "+proj=lcc +lat_1=30 +lat_2=60 +lat_0=38.5 +lon_0=-97 +datum=WGS84 +units=m +no_defs")
+
+	transformer = Transformer.from_crs("EPSG:4326", lambert_conformal, always_xy=True)
 
 	# Convert the entire grid to UTM
-	x_grid, y_grid = utm_proj(lon_grid, lat_grid)
+	x_grid, y_grid = transformer.transform(lon_grid, lat_grid)
 
 	k_to_delete = []
 
