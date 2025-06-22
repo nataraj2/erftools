@@ -24,8 +24,8 @@ is also written into `Output`.
 
 ## Examples
 
-Example inputs are given in the input file `input_for_era5_Laura` and `input_for_era5_Henri`. 
+Example inputs are given in the input file `input_for_Laura` and `input_for_Henri`. 
 
-1. Run `python3 WriteICFromERA5Data.py input_for_era5_Laura`.  
+1. Run `python3 WriteICFromERA5Data.py input_for_Laura`.  
 2. Visualize the VTK files in the `Output` directory in VisIt or ParaView.
 
