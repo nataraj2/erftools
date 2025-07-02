@@ -248,7 +248,8 @@ def find_erf_domain_extents(x_grid, y_grid, nx, ny):
 
 	ymin = max(y1,y2) + 100e3
 
-	print("xmin, xmax, ymin, ymax are ", xmin, xmax, ymin, ymax);
+	print("geometry.prob_lo  = ",  np.ceil(xmin+50e3), np.ceil(ymin+50e3), 0.0)
+	print("geometry.prob_hi  = ",  np.floor(xmax-50e3), np.floor(ymax-50e3), 25000.0)
 
 	return xmin, xmax, ymin, ymax
 
