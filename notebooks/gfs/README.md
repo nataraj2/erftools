@@ -14,7 +14,7 @@ area: 50,-130,10,-50
 Note: The geographical area is specified as latitude maximum, longitude minimum, latitude minimum, longitude maximum.
 
 2. `python3 WriteICFromGFSData.py <input_file>`   
-The `input_file` is the text file in step 2. If any packages are missing, install them using `pip install <package>`
+The `input_file` is the text file in step 1. If any packages are missing, install them using `pip install <package>`
 
 3. The output VTK files for visualization is written into a directory `Output`. The initial condition binary file (`*bin`) for ERF   
 is also written into `Output`.
