@@ -1,5 +1,7 @@
 # Read weather data from FourCastNetGFS and write forecast files for ERF
 
+Inference using FourCastNetGFS will have to be run before executing the routines in this directory.
+
 This directory contains the python scripts to create forecast files for time-dependent boundary forcing  
  for hurricane simulations in ERF from the forecast weather data obtained from inference using the 
 AI model FourCastNetGFS.
@@ -24,8 +26,8 @@ is also written into `Output`.
 
 ## Examples
 
-Example inputs are given in the input file `input_for_Laura` and `input_for_Henri`. 
+Example inputs are given in the input file `input_for_Laura`, `input_for_Henri`, `input_for_Ida`. 
 
-1. Run `python3 WriteICFromGFSData_FourCastNetGFS.py input_for_Laura`<input_dir>`
+1. Run `python3 WriteICFromGFSData_FourCastNetGFS.py input_for_Laura <input_dir>`
 2. Visualize the VTK files in the `Output` directory in VisIt or ParaView.
 
