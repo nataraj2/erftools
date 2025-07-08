@@ -25,6 +25,7 @@ from .gfs.IO import find_erf_domain_extents
 from .gfs.IO import write_binary_vtk_cartesian
 from .gfs.Plot_1D import plot_1d
 from .gfs.ReadGFSDataAndWriteERF_IC import ReadGFS_3DData
+from .gfs.ReadGFSDataAndWriteERF_IC_FourCastNetGFS import ReadGFS_3DData_FourCastNetGFS
 
 
 try:
