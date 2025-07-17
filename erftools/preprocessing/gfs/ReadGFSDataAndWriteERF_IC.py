@@ -67,9 +67,11 @@ def ReadGFS_3DData(file_path, area, is_IC):
 				month = grb.month
 				day = grb.day
 				hour = grb.hour
+				forecast_hour = grb.forecastTime
+
 				minute = grb.minute if hasattr(grb, 'minute') else 0
 				print(f"Date: {year}-{month:02d}-{day:02d}, Time: {hour:02d}:{minute:02d} UTC")
-				datetime_str = f"{year:04d}_{month:02d}_{day:02d}_{hour:02d}_{minute:02d}"
+				datetime_str = f"{year:04d}_{month:02d}_{day:02d}_{hour:02d}_{minute:02d}_{forecast_hour:03d}"
 				print(f"Datetime string: {datetime_str}")
 				printed_time = True
 
@@ -410,7 +412,7 @@ def ReadGFS_3DData(file_path, area, is_IC):
 									 nz, k_to_delete, True,
 									 scalars, velocity)
 
-	write_binary_vtk_cartesian(output_binary, domain_lats, domain_lons,
+	write_binary_vtk_cartesian(datetime_str, output_binary, domain_lats, domain_lons,
 							   x_grid, y_grid, z_grid,
 							   nx, ny, nz, k_to_delete, scalars)
 

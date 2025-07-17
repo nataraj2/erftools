@@ -254,7 +254,7 @@ def find_erf_domain_extents(x_grid, y_grid, nx, ny):
 	return xmin, xmax, ymin, ymax
 
 
-def write_binary_vtk_cartesian(output_binary, domain_lats, domain_lons,
+def write_binary_vtk_cartesian(datetime_str, output_binary, domain_lats, domain_lons,
 							   x_grid, y_grid, z_grid, nx, ny, nz,
 							   k_to_delete, point_data=None):
 
@@ -346,7 +346,7 @@ def write_binary_vtk_cartesian(output_binary, domain_lats, domain_lons,
 				print("Variable not found in scalars list", name)
 				#sys.exit()
 
-	output_vtk = "./Output/" + "ERF_IC.vtk"
+	output_vtk = "./Output/" + "ERF_IC_" + datetime_str + ".vtk"
 
 	tmp = []
 	print("Writing write_binary_vtk_cartesian_file")
