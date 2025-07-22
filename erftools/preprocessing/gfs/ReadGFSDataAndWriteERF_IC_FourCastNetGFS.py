@@ -328,9 +328,9 @@ def ReadGFS_3DData_FourCastNetGFS(file_path, area, is_IC):
 									 nz, k_to_delete, True,
 									 scalars, velocity)
 
-	#write_binary_vtk_cartesian(output_binary, domain_lats, domain_lons,
-	#						   x_grid, y_grid, z_grid,
-	#						   nx, ny, nz, k_to_delete, scalars)
+	write_binary_vtk_cartesian(output_binary, domain_lats, domain_lons,
+							   x_grid, y_grid, z_grid,
+	    					   nx, ny, nz, k_to_delete, scalars)
 
 	scalars_for_ERF = {
 		 "uvel": uvel_3d,
