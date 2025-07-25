@@ -352,7 +352,7 @@ def write_binary_vtk_cartesian(date_time_forecast_str, output_binary, domain_lat
 				for j in range(ny_erf):
 					for i in range(nx_erf):
 						lon, lat = transformer.transform(x_grid_erf[j,i], y_grid_erf[j,i])
-						lon_idx, lat_idx = find_latlon_indices(domain_lons, domain_lats, lon, lat)
+						lon_idx, lat_idx = find_latlon_indices(domain_lons, domain_lats, 360.0+lon, lat)
 						lat_erf[i,j,0] = lat;
 						lon_erf[i,j,0] = lon;
 						#if(lat_idx > 110):
