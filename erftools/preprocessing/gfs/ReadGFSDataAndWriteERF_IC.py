@@ -382,8 +382,8 @@ def ReadGFS_3DData(file_path, area, is_IC):
 
 
     scalars = {
-         "latitude": None,
-         "longitude": None,
+         #"latitude": None,
+         #"longitude": None,
          "density": rhod_3d,
          "uvel": uvel_3d,
          "vvel": vvel_3d,
