@@ -29,9 +29,6 @@ if __name__ == "__main__":
         filenames, area = Download_GFS_ForecastData(input_filename)
         # Create the directory if it doesn't exist
         os.makedirs("Output", exist_ok=True)
-        with open("./Output/forecast_times.dat", "w") as f:
-            for i in range(len(filenames)):
-                f.write(f"{i * 3600}\n")
         for filename in filenames:
             is_IC = True
             print(f"Processing file: {filename}")

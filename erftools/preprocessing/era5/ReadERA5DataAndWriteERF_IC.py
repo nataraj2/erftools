@@ -196,7 +196,7 @@ def ReadERA5_3DData(file_path, is_IC):
 	lon_grid, lat_grid = np.meshgrid(domain_lons, domain_lats)
 
 	lambert_conformal = CRS.from_proj4(
-    "+proj=lcc +lat_1=30 +lat_2=60 +lat_0=38.5 +lon_0=-97 +datum=WGS84 +units=m +no_defs")
+	"+proj=lcc +lat_1=30 +lat_2=60 +lat_0=38.5 +lon_0=-97 +datum=WGS84 +units=m +no_defs")
 
 	transformer = Transformer.from_crs("EPSG:4326", lambert_conformal, always_xy=True)
 
@@ -327,6 +327,8 @@ def ReadERA5_3DData(file_path, is_IC):
 
 
 	scalars = {
+		 "latitude": None,  
+		 "longitude": None,  
 		 "density": rhod_3d,
 		 "uvel": uvel_3d,
 		 "vvel": vvel_3d,

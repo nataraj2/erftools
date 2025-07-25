@@ -9,7 +9,7 @@ def calculate_utm_zone(longitude):
 	 """
 	 return int((longitude + 180) // 6) + 1
 
-def write_binary_simple_ERF(output_binary, x_grid, y_grid, z_grid, point_data):
+def write_binary_simple_ERF(output_binary, lat_erf, lon_erf, x_grid, y_grid, z_grid, point_data):
 
 	x_grid = np.asarray(x_grid)
 	y_grid = np.asarray(y_grid)
@@ -22,6 +22,14 @@ def write_binary_simple_ERF(output_binary, x_grid, y_grid, z_grid, point_data):
 
 	with open(output_binary, "wb") as file:
 		file.write(struct.pack('iiii', ncol, nrow, nz, len(point_data)))
+
+		for j in range(nrow):  # Iterate over the y-dimension
+			for i in range(ncol):  # Iterate over the x-dimension
+				file.write(struct.pack('f', lat_erf[i,j,0]))
+
+		for j in range(nrow):  # Iterate over the y-dimension
+			for i in range(ncol):  # Iterate over the x-dimension
+				file.write(struct.pack('f', lon_erf[i,j,0]))
 
 
 	   # Write grid points using a nested for loop
@@ -82,11 +90,10 @@ def write_binary_vtk_structured_grid(filename, x_grid, y_grid, z_grid,
 
 		# Write grid points using a nested for loop
 		for k in range(nz):
-			if nz-1-k in k_to_delete:
-				#print("Val is ", nz - 1 - k)
-				continue;
 			z = np.mean(z_grid[:, :, nz-1-k])
-			print("Val is ", z)
+			if nz-1-k in k_to_delete:
+				print("Val is ", nz - 1 - k)
+				continue;
 			for j in range(ny):
 				for i in range(nx):
 					x = x_grid[i, j]
@@ -98,6 +105,8 @@ def write_binary_vtk_structured_grid(filename, x_grid, y_grid, z_grid,
 		if point_data:
 			f.write(f'POINT_DATA {nx * ny * nzval}\n'.encode())
 			for name, data in point_data.items():
+				if(name == "latitude" or name=="longitude"):
+					continue;
 				f.write(f'SCALARS {name} float 1\n'.encode())
 				f.write(b'LOOKUP_TABLE default\n')
 				for k in range(nz):  # Iterate over the z-dimension
@@ -231,7 +240,6 @@ def find_erf_domain_extents(x_grid, y_grid, nx, ny):
 			i1 = i
 			break
 	xmin = max(x_grid[i1,0], x_grid[0,0]) + 100e3
-	print("Values are ", x_grid[0,0], x_grid[0,-1], y_grid[0,0], y_grid[0,-1])
 
 	for i in range(0, ny-1):
 		if(x_grid[0,i] < xmax and x_grid[0,i+1] > xmax):
@@ -254,7 +262,7 @@ def find_erf_domain_extents(x_grid, y_grid, nx, ny):
 	return xmin, xmax, ymin, ymax
 
 
-def write_binary_vtk_cartesian(datetime_str, output_binary, domain_lats, domain_lons,
+def write_binary_vtk_cartesian(date_time_forecast_str, output_binary, domain_lats, domain_lons,
 							   x_grid, y_grid, z_grid, nx, ny, nz,
 							   k_to_delete, point_data=None):
 
@@ -295,6 +303,9 @@ def write_binary_vtk_cartesian(datetime_str, output_binary, domain_lats, domain_
 	qr_erf = np.zeros((nx_erf, ny_erf, nz_erf))
 	theta_erf = np.zeros((nx_erf, ny_erf, nz_erf))
 
+	lat_erf = np.zeros((nx_erf,ny_erf,nz_erf))	
+	lon_erf = np.zeros((nx_erf,ny_erf,nz_erf))
+
 	scalars = {
 		 "density": rho_erf,
 		 "uvel": uvel_erf,
@@ -305,6 +316,20 @@ def write_binary_vtk_cartesian(datetime_str, output_binary, domain_lats, domain_
 		 "qc": qc_erf,
 		 "qr": qr_erf,
 	}
+
+	scalars_to_plot = {
+		 "latitude": lat_erf,
+		 "longitude": lon_erf,
+		 "density": rho_erf,
+		 "uvel": uvel_erf,
+		 "vvel": vvel_erf,
+		 "wvel": wvel_erf,
+		 "theta": theta_erf,
+		 "qv": qv_erf,
+		 "qc": qc_erf,
+		 "qr": qr_erf,
+	}
+
 
 	kcount = 1
 	for k in range(nz):  # Iterate over the z-dimension
@@ -322,12 +347,14 @@ def write_binary_vtk_cartesian(datetime_str, output_binary, domain_lats, domain_
 
 	if point_data:
 		for name, data in point_data.items():
-			if name in scalars:  # Check if the name exists in the scalars dictionary
+			if name in scalars_to_plot:  # Check if the name exists in the scalars dictionary
+				print("name is", name);
 				for j in range(ny_erf):
 					for i in range(nx_erf):
 						lon, lat = transformer.transform(x_grid_erf[j,i], y_grid_erf[j,i])
-						lon = lon
 						lon_idx, lat_idx = find_latlon_indices(domain_lons, domain_lats, lon, lat)
+						lat_erf[i,j,0] = lat;
+						lon_erf[i,j,0] = lon;
 						#if(lat_idx > 110):
 						#	print("Lat value out of range", lat_idx, lon_idx, x_grid_erf[i,j], y_grid_erf[i,j])
 						#	sys.exit()
@@ -337,19 +364,33 @@ def write_binary_vtk_cartesian(datetime_str, output_binary, domain_lats, domain_
 						for k in range(nz):  # Iterate over the z-dimension
 							if nz-1-k in k_to_delete:
 								continue
-							scalars[name][i,j,kcount] = (data[nx-1-lat_idx, lon_idx, nz-1-k] + data[nx-1-lat_idx, lon_idx-1, nz-1-k] +
+							if(name == "latitude"):
+								scalars_to_plot[name][i,j,kcount] = lat;
+								#print("Reaching here lat", lat)
+							elif(name == "longitude"):
+								scalars_to_plot[name][i,j,kcount] = lon;	
+								#print("Reaching here lon", lon)
+							else:
+								scalars_to_plot[name][i,j,kcount] = (data[nx-1-lat_idx, lon_idx, nz-1-k] + data[nx-1-lat_idx, lon_idx-1, nz-1-k] +
 														 data[nx-1-lat_idx+1, lon_idx-1, nz-1-k] + data[nx-1-lat_idx+1, lon_idx, nz-1-k])/4.0
+
+							if(name != "latitude" and name != "longitude"):
+								scalars[name][i,j,kcount] = scalars_to_plot[name][i,j,kcount]
+
 							kcount = kcount+1
 
-						scalars[name][i,j,0] = scalars[name][i,j,1]
+						scalars_to_plot[name][i,j,0] = scalars_to_plot[name][i,j,1]
+						if(name != "latitude" and name != "longitude"):
+							scalars[name][i,j,0] = scalars[name][i,j,1]
+								
 			else:
 				print("Variable not found in scalars list", name)
 				#sys.exit()
 
-	output_vtk = "./Output/" + "ERF_IC_" + datetime_str + ".vtk"
+	output_cart_vtk = "./Output/" + "ERF_IC_" + date_time_forecast_str +".vtk"
 
 	tmp = []
 	print("Writing write_binary_vtk_cartesian_file")
-	write_binary_vtk_cartesian_file(output_vtk, x_grid_erf, y_grid_erf, z_grid_erf, nz_erf, tmp, False, scalars)
+	write_binary_vtk_cartesian_file(output_cart_vtk, x_grid_erf, y_grid_erf, z_grid_erf, nz_erf, tmp, False, scalars_to_plot)
 	print("Writing write_binary_simple_ERF")
-	write_binary_simple_ERF(output_binary, x_grid_erf, y_grid_erf, z_grid_erf, scalars)
+	write_binary_simple_ERF(output_binary, lat_erf, lon_erf, x_grid_erf, y_grid_erf, z_grid_erf, scalars)
