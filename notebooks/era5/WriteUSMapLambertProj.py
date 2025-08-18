@@ -10,6 +10,25 @@ from erftools.preprocessing import ReadERA5_3DData
 
 from pyproj import CRS, Transformer
 from numpy import *
+import pandas as pd
+import pyvista as pv
+
+def read_user_input(filename):
+    data = {}
+    with open(filename, 'r') as f:
+        for line in f:
+            if ':' in line:
+                key, value = line.strip().split(':', 1)
+                key = key.strip().lower()
+                value = value.strip()
+                if key == 'area':
+                    data[key] = [float(x) for x in value.split(',')]
+                elif key == 'time':
+                    data[key] = value
+                else:
+                    data[key] = int(value)
+    return data
+
 
 def CreateLCCMapping(area):
 
@@ -33,7 +52,6 @@ def CreateLCCMapping(area):
 
     return lambert_conformal
     
-
 def write_vtk_states(x, y, count, filename):
     """
     Write a VTK file containing borders for all states.
@@ -97,10 +115,6 @@ def WriteUSMapVTKFile(area):
 
     lambert_conformal = CreateLCCMapping(area)
 
-    #lambert_conformal = CRS.from_proj4(
-    #    "+proj=lcc +lat_1=30 +lat_2=60 +lat_0=38.5 +lon_0=-97 +datum=WGS84 +units=m +no_defs"
-    #)
-
     # Create transformer FROM geographic (lon/lat) TO Lambert
     transformer = Transformer.from_crs("EPSG:4326", lambert_conformal, always_xy=True)
 
@@ -115,19 +129,6 @@ def WriteUSMapVTKFile(area):
         utm_y.append(y)
         count_vec.append(count)
 
-    #plt.scatter(utm_x, utm_y, s=10, c='blue', label='UTM Points')
-    #plt.xlabel('UTM X')
-    #plt.ylabel('UTM Y')
-    #plt.title('UTM Converted Points')
-    #plt.legend()
-    #plt.grid()
-    #plt.savefig("./Images/UTM_scatter.png")
-    #plt.show()
-
-    # Shift coordinates to ensure minimum x and y start at 0
-    #utm_x = array(utm_x) - min(utm_x)
-    #utm_y = array(utm_y) - min(utm_y)
-
     # Write the shifted UTM coordinates to a VTK file
     write_vtk_states(utm_x, utm_y, count_vec, "USMap_LambertProj.vtk")
     return lambert_conformal
@@ -135,31 +136,20 @@ def WriteUSMapVTKFile(area):
 
 if __name__ == "__main__":
 
-    if len(sys.argv) == 1:
-        print("Usage: python3 WriteICFromERA5Data.py <input_filename> [--do_forecast=true]")
-        sys.exit(1)
+     # --- Parse arguments ---
+    parser = argparse.ArgumentParser(description="Write USMap in Lambert projection coordinates to ASCII VTK")
+    parser.add_argument("input_filename", help="Some input file (not used here, can be metadata)")
+    args = parser.parse_args()
 
-    parser = argparse.ArgumentParser(description="Download and process ERA5 data.")
-    parser.add_argument("input_filename", help="Input filename, e.g. inputs_for_Laura")
-    parser.add_argument("--do_forecast", type=bool, default=False, help="Set to true to download forecast data")
+    input_filename = args.input_filename
 
     args = parser.parse_args()
 
     input_filename = args.input_filename
-    do_forecast = args.do_forecast
 
-    if do_forecast:
-        filenames, area = Download_ERA5_ForecastData(input_filename)
-        lambert_conformal = WriteUSMapVTKFile(area)
-        # Create the directory if it doesn't exist
-        os.makedirs("Output", exist_ok=True)
-        for filename in filenames:
-            print(f"Processing file: {filename}")
-            ReadERA5_3DData(filename, lambert_conformal)
+    user_inputs = read_user_input(input_filename)
+    print("User inputs:", user_inputs)
+    area = user_inputs.get("area", None)
 
-    else:
-        filename, area = Download_ERA5_Data(input_filename)
-        lambert_conformal = WriteUSMapVTKFile(area)
-        print("Filename is ", filename)
-        print(f"Processing file: {filename}")
-        ReadERA5_3DData(filename, lambert_conformal)
+    lambert_conformal = WriteUSMapVTKFile(area)
+

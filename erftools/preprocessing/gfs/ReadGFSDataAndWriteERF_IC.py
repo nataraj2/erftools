@@ -38,7 +38,7 @@ def p_sat(temp):
 
     return ps
 
-def ReadGFS_3DData(file_path, area, is_IC):
+def ReadGFS_3DData(file_path, area, lambert_conformal):
     # Open the GRIB2 file
     pressure_levels = []
     ght_3d_hr3 = []
@@ -184,9 +184,7 @@ def ReadGFS_3DData(file_path, area, is_IC):
     ny = domain_lons.shape[0]
 
     print("nx and ny here are ", nx, ny)
-
-    
-
+   
     ght_3d_hr3   = ght_3d_hr3[:, nlats-lat_end-1:nlats-lat_start, lon_start:lon_end+1]  
     uvel_3d_hr3  = uvel_3d_hr3[:, nlats-lat_end-1:nlats-lat_start, lon_start:lon_end+1]
     vvel_3d_hr3  = vvel_3d_hr3[:, nlats-lat_end-1:nlats-lat_start, lon_start:lon_end+1]
@@ -242,9 +240,6 @@ def ReadGFS_3DData(file_path, area, is_IC):
     # Create meshgrid
     x_grid, y_grid = np.meshgrid(domain_lons, domain_lats)
     lon_grid, lat_grid = np.meshgrid(domain_lons, domain_lats)
-
-    lambert_conformal = CRS.from_proj4(
-    "+proj=lcc +lat_1=30 +lat_2=60 +lat_0=38.5 +lon_0=-97 +datum=WGS84 +units=m +no_defs")
 
     transformer = Transformer.from_crs("EPSG:4326", lambert_conformal, always_xy=True)
 
@@ -328,13 +323,13 @@ def ReadGFS_3DData(file_path, area, is_IC):
 
         #pressure_3d[:, :, k] = (temp_3d[:, :, k]/theta_3d[:, :, k])**(1004.5/287.0)*1000.0
         #pressure_3d[:, :, k] = 0.622*pv/qv_3d[:, :, k] + pv
-        #pressure_3d[:, :, k] = 1000.0*np.exp(-const_g*(np.mean(z_grid[:,:,k])-0.0)/(287*temp_3d[:, :, k]*(1.0+1.6*qv_3d[:, :, k])))
+        pressure_3d[:, :, k] = 1000.0*np.exp(-const_g*(np.mean(z_grid[:,:,k])-0.0)/(287*temp_3d[:, :, k]*(1.0+1.6*qv_3d[:, :, k])))
 
         # Assuming quantities at surface is same as the first cell
-        if(k==nz-1):
-            pressure_3d[:, :, k] = 1000.0 - 1000.0/(287*temp_3d[:, :, k]*(1.0+1.6*qv_3d[:, :, k]))*const_g*z_grid[:,:,k]
-        else:
-            pressure_3d[:, :, k] = pressure_3d[:, :, k+1] - pressure_3d[:, :, k+1]/(287*temp_3d[:, :, k+1]*(1.0+1.6*qv_3d[:, :, k+1]))*const_g*(z_grid[:,:,k]-z_grid[:,:,k+1])
+        #if(k==nz-1):
+        #    pressure_3d[:, :, k] = 1000.0 - 1000.0/(287*temp_3d[:, :, k]*(1.0+1.6*qv_3d[:, :, k]))*const_g*z_grid[:,:,k]
+        #else:
+        #    pressure_3d[:, :, k] = pressure_3d[:, :, k+1] - pressure_3d[:, :, k+1]/(287*temp_3d[:, :, k+1]*(1.0+1.6*qv_3d[:, :, k+1]))*const_g*(z_grid[:,:,k]-z_grid[:,:,k+1])
 
         qsat_3d[:,:,k] = 0.622*ps/(pressure_3d[:, :, k]-ps)
 
@@ -421,7 +416,7 @@ def ReadGFS_3DData(file_path, area, is_IC):
 
     write_binary_vtk_cartesian(date_time_forecast_str, output_binary, domain_lats, domain_lons,
                                x_grid, y_grid, z_grid,
-                               nx, ny, nz, k_to_delete, scalars)
+                               nx, ny, nz, k_to_delete, lambert_conformal, scalars)
 
     scalars_for_ERF = {
          "theta": theta_3d,

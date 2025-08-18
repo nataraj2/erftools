@@ -1,20 +1,103 @@
 import cdsapi
+import os
+from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor
 
-# --- Read user values from file ---
+
 def read_user_input(filename):
-    inputs = {}
+    data = {}
     with open(filename, 'r') as f:
         for line in f:
-            if ':' not in line:
-                continue
-            key, value = line.strip().split(':', 1)
-            key = key.strip()
-            value = value.strip()
-            if key == "area":
-                inputs[key] = [float(x) for x in value.split(',')]
-            else:
-                inputs[key] = [value]
-    return inputs
+            if ':' in line:
+                key, value = line.strip().split(':', 1)
+                key = key.strip().lower()
+                value = value.strip()
+                if key == 'area':
+                    data[key] = [float(x) for x in value.split(',')]
+                elif key == 'time':
+                    data[key] = value
+                else:
+                    data[key] = int(value)
+    return data
+
+
+def generate_timestamps(start_dt, hours=72, interval=3):
+    timestamps = []
+    for i in range(0, hours + 1, interval):
+        dt = start_dt + timedelta(hours=i)
+        timestamps.append(dt)
+    return timestamps
+
+
+def download_one_timestep(cds_client, dataset, request, output_filename, idx):
+    if os.path.exists(output_filename):
+        print(f"[{idx}] Skipping existing: {output_filename}")
+        return
+
+    print(f"[{idx}] Downloading {output_filename} ...")
+    cds_client.retrieve(dataset, request, output_filename)
+    print(f"[{idx}] Done: {output_filename}")
+
+
+def Download_ERA5_ForecastData(inputs_file):
+    user_inputs = read_user_input(inputs_file)
+
+    dataset = "reanalysis-era5-pressure-levels"
+    variables = [
+        "geopotential",
+        "relative_humidity",
+        "specific_cloud_ice_water_content",
+        "specific_cloud_liquid_water_content",
+        "specific_humidity",
+        "specific_rain_water_content",
+        "specific_snow_water_content",
+        "temperature",
+        "u_component_of_wind",
+        "v_component_of_wind",
+        "vertical_velocity",
+        "vorticity"
+    ]
+
+    pressure_levels = [
+        "1", "2", "3", "5", "7", "10", "20", "30", "50", "70", "100", "125",
+        "150", "175", "200", "225", "250", "300", "350", "400", "450", "500",
+        "550", "600", "650", "700", "750", "775", "800", "825", "850", "875",
+        "900", "925", "950", "975", "1000"
+    ]
+
+    area = user_inputs["area"]
+    start_time = datetime(
+        user_inputs["year"],
+        user_inputs["month"],
+        user_inputs["day"],
+        int(user_inputs["time"].split(":")[0])
+    )
+
+    timestamps = generate_timestamps(start_time)
+
+    cds_client = cdsapi.Client()
+    filenames = []
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        for idx, dt in enumerate(timestamps):
+            y, m, d, h = dt.strftime("%Y"), dt.strftime("%m"), dt.strftime("%d"), dt.strftime("%H:%M")
+            request = {
+                "product_type": "reanalysis",
+                "variable": variables,
+                "pressure_level": pressure_levels,
+                "year": y,
+                "month": m,
+                "day": d,
+                "time": [h],
+                "format": "grib",
+                "area": area,
+            }
+
+            fname = f"era5_{y}{m}{d}_{h.replace(':', '')}.grib"
+            filenames.append(fname)
+            executor.submit(download_one_timestep, cds_client, dataset, request, fname, idx)
+
+    return filenames, area
 
 def Download_ERA5_Data(inputs):
 
@@ -66,7 +149,4 @@ def Download_ERA5_Data(inputs):
     client = cdsapi.Client()
     filename = client.retrieve(dataset, request).download()
     print(f"Downloaded file: {filename}")
-    return filename
-
-
-
+    return filename, area

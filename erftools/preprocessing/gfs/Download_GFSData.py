@@ -35,7 +35,7 @@ def generate_urls_for_24_hours(data):
     urls = []
     filenames = []
     # 24 hours / 3 = 8 forecast times: 0,3,6,...,21
-    for fhour in range(0, 24, 3):
+    for fhour in range(0, 48, 3):
         fhour_str = f"f{fhour:03d}"
         filename = f"gfs.0p25.{yyyymmddhh}.{fhour_str}.grib2"
         url = f"https://data-osdf.rda.ucar.edu/ncar/rda/d084001/{year}/{yyyymmdd}/{filename}"
@@ -75,10 +75,14 @@ def Download_GFS_Data(inputs):
     print("Download URL:", url)
     print("Filename:", filename)
 
-    # Optional: actually download
     import urllib.request
-    urllib.request.urlretrieve(url, filename)
-    print("Download complete.")
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req) as response, open(filename, 'wb') as out_file:
+            out_file.write(response.read())
+        print("Download complete.")
+    except Exception as e:
+        print("Download failed:", e)
 
     area = [lat_max, lon_min, lat_min, lon_max]
     return filename, area
