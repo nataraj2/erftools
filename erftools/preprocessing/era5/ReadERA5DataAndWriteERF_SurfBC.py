@@ -10,6 +10,8 @@ from pyproj import Proj, Transformer, CRS
 from scipy.interpolate import interp1d
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
+from mpi4py import MPI
+import time
 
 def CreateLCCMapping(area):
 
@@ -369,7 +371,7 @@ def write_binary_vtk_cartesian(date_time_forecast_str, output_binary, domain_lat
                 print("Variable not found in scalars list", name)
                 #sys.exit()
 
-    output_cart_vtk = "./Output/" + "ERF_Surface_Cart_" + date_time_forecast_str +".vtk"
+    output_cart_vtk = "./Output/VTK/Surface/ERFDomain/" + "ERF_Surface_Cart_" + date_time_forecast_str +".vtk"
 
     tmp = []    
     write_binary_vtk_cartesian_file(output_cart_vtk, x_grid_erf, y_grid_erf, z_grid_erf, nz_erf, tmp, False, scalars)    
@@ -512,9 +514,9 @@ def ReadERA5_SurfaceData(file_path, lambert_conformal):
          "ls_mask": ls_mask,
     }
 
-    output_vtk = "./Output/ERA5_Surface_" + date_time_forecast_str + ".vtk"
+    output_vtk = "./Output/VTK/Surface/ERA5Domain/ERA5_Surface_" + date_time_forecast_str + ".vtk"
 
-    output_binary = "./Output/ERF_Surface_" + date_time_forecast_str + ".bin"
+    output_binary = "./Output/Surface/ERF_Surface_" + date_time_forecast_str + ".bin"
     
     write_binary_vtk_structured_grid(output_vtk, x_grid, y_grid, z_grid, nz, k_to_delete, True, scalars)
 
@@ -523,7 +525,7 @@ def ReadERA5_SurfaceData(file_path, lambert_conformal):
                                nx, ny, nz, k_to_delete, lambert_conformal, scalars)
 
 
-def generate_timestamps(start_dt, hours=12, interval=6):
+def generate_timestamps(start_dt, hours=72, interval=3):
     timestamps = []
     for i in range(0, hours + 1, interval):
         dt = start_dt + timedelta(hours=i)
@@ -565,15 +567,30 @@ def Download_ERA5_ForecastSurfaceData(inputs_file):
     )
 
     # 72 hours with 6-hour interval
-    timestamps = generate_timestamps(start_time, hours=72, interval=6)
+    timestamps = generate_timestamps(start_time, hours=72, interval=3)
+
+     # MPI setup
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    size = comm.Get_size()
 
     cds_client = cdsapi.Client()
     filenames = []
 
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        for idx, dt in enumerate(timestamps):
-            y, m, d, h = dt.strftime("%Y"), dt.strftime("%m"), dt.strftime("%d"), dt.strftime("%H:%M")
-            request = {
+    max_download_ranks = 4   # only allow 4 ranks to download
+    active_ranks = min(size, max_download_ranks)
+
+    for idx, dt in enumerate(timestamps):
+        # Assign only among the active ranks
+        if (idx % active_ranks) != rank:
+            continue
+
+        if rank >= active_ranks:
+            # This rank is idle for downloading
+            continue
+    
+        y, m, d, h = dt.strftime("%Y"), dt.strftime("%m"), dt.strftime("%d"), dt.strftime("%H:%M")
+        request = {
                 "product_type": "reanalysis",
                 "variable": variables,
                 "year": y,
@@ -582,38 +599,11 @@ def Download_ERA5_ForecastSurfaceData(inputs_file):
                 "time": [h],
                 "format": "grib",
                 "area": area,
-            }
+         }
 
-            fname = f"era5_surf_{y}{m}{d}_{h.replace(':', '')}.grib"
-            filenames.append(fname)
-            executor.submit(download_one_timestep, cds_client, dataset, request, fname, idx)
+        fname = f"era5_surf_{y}{m}{d}_{h.replace(':', '')}.grib"
+        filenames.append(fname)
+        download_one_timestep(cds_client, dataset, request, fname, idx)
 
     return filenames, area
 
-if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser(description="Download + process ERA5 surface data.")
-    parser.add_argument("inputs", type=str, help="Path to the user inputs file (YAML-style).")
-
-    parser.add_argument(
-    "--do_forecast",
-    type=lambda x: str(x).lower() in ("true", "1", "yes"),
-    default=False,
-    help="Set to true to download/process forecast data.")
-
-    args = parser.parse_args()
-
-    os.makedirs("Output", exist_ok=True)
-
-    if args.do_forecast:
-        print("Running forecast (pressure-level) download + processing...")
-        filenames, area = Download_ERA5_ForecastSurfaceData(args.inputs)
-    else:
-        print("Running surface download + processing...")
-        filenames, area = Download_ERA5_SurfaceData(args.inputs)
-
-    lambert_conformal = CreateLCCMapping(area)
-
-    for idx, filename in enumerate(filenames):
-        print(f"[{idx}] Processing file: {filename}")
-        ReadERA5_SurfaceData(filename, lambert_conformal)
