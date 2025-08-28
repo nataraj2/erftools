@@ -6,7 +6,10 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 
 from erftools.preprocessing import Download_ERA5_Data
 from erftools.preprocessing import Download_ERA5_ForecastData
+from erftools.preprocessing import Download_ERA5_SurfaceData
+from erftools.preprocessing import Download_ERA5_ForecastSurfaceData
 from erftools.preprocessing import ReadERA5_3DData
+from erftools.preprocessing import ReadERA5_SurfaceData
 
 from pyproj import CRS, Transformer
 from numpy import *
@@ -148,6 +151,21 @@ if __name__ == "__main__":
     input_filename = args.input_filename
     do_forecast = args.do_forecast
 
+    # Download surface data
+    if do_forecast:
+        print("Running forecast (pressure-level) download + processing...")
+        filenames, area = Download_ERA5_ForecastSurfaceData(input_filename)
+    else:
+        print("Running surface download + processing...")
+        filenames, area = Download_ERA5_SurfaceData(input_filename)
+
+    lambert_conformal = CreateLCCMapping(area)
+
+    for idx, filename in enumerate(filenames):
+        print(f"[{idx}] Processing file: {filename}")
+        ReadERA5_SurfaceData(filename, lambert_conformal)
+
+    # Download 3d data over pressure levels
     if do_forecast:
         filenames, area = Download_ERA5_ForecastData(input_filename)
         lambert_conformal = WriteUSMapVTKFile(area)
