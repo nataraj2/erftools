@@ -16,14 +16,9 @@ area: 50,-130,10,-50
 ```
 Note: The geographical area is specified as latitude maximum, longitude minimum, latitude minimum, longitude maximum.
 
-3. `python3 WriteICFromERA5Data.py <input_file> --do_forecast=true --forecast_time_hours=72 --interval=3`      
-The `input_file` is the text file in step 2. The `forecast_time_hours` specifier is the time in hours   
-for which the forecast needs to be done starting from the date and time specified in the `input_file`.   
-The `interval` specifier takes the interval in hours to download the weather data.   
-If any packages are missing, install them using `pip install <package>`  
-So for eg., 
+3. Run the script in parallel. 
 `srun -n 32 python3 WriteICFromERA5Data.py input_for_Henri --do_forecast=true --forecast_time_hours=72 --interval_hours=3`  
-Will download and process the weather data for a total of 72 hours with an interval of 3 hours.   
+This uses 32 MPI ranks to download and process the weather data for hurricane Henri for a total of 72 hours with an interval of 3 hours.   
 
 4. The output VTK files for visualization is written into  `Output/VTK/3D` for 3D data and   
 `Output/VTK/Surface` for surface data.  
