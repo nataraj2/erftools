@@ -16,7 +16,7 @@ area: 50,-130,10,-50
 ```
 Note: The geographical area is specified as latitude maximum, longitude minimum, latitude minimum, longitude maximum.
 
-3. Run the script in parallel. 
+3. Run the script in parallel.   
 `srun -n 32 python3 WriteICFromERA5Data.py input_for_Henri --do_forecast=true --forecast_time_hours=72 --interval_hours=3`  
 This uses 32 MPI ranks to download and process the weather data for hurricane Henri for a total of 72 hours with an interval of 3 hours.   
 
