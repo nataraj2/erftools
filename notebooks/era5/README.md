@@ -1,7 +1,7 @@
 # Read weather data from ERA5 and write initial condition file for ERF
 
-This directory contains the python scripts to write the initial condition file, lateral forcing files and  
-surface fluxes files for hurricane simulations in ERF from the ERA5 weather data.
+This directory contains the python scripts to write the initial condition file, lateral forcing files and surface fluxes files  
+for hurricane simulations in ERF from the ERA5 weather data.
 
 1. Follow the steps here https://cds.climate.copernicus.eu/how-to-api to create a free account   
    to download ERA5 data
