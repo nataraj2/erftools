@@ -27,7 +27,8 @@ can be visualized in VisIt or ParaView.
 5. The following directories are to be copied into the ERF run directory.  
 `Output/3D`- The binary files (`*bin`) for lateral forcing.   
 `Output/Surface` -  The binary files (`*.bin`) for surface fluxes.  
-The first file in `Output/3D` can be used as the initial condition file.
+The first file in `Output/3D` can be used as the initial condition file.  
+The domain extents to be used is written into `Output/domain_extents.txt`.  
 
 Various example inputs for different hurricanes are provided in this folder. 
 
