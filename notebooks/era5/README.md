@@ -21,18 +21,13 @@ Note: The geographical area is specified as latitude maximum, longitude minimum,
 `srun -n 32 python3 WriteICFromERA5Data.py input_for_Henri --do_forecast=true --forecast_time_hours=72 --interval_hours=3`  
 This uses 32 MPI ranks to download and process the weather data for hurricane Henri for a total of 72 hours with an interval of 3 hours.   
 
-4. The output VTK files for visualization is written into  `Output/VTK/3D` for 3D data and `Output/VTK/Surface` for surface data.  
+4. The output VTK files for visualization is written into  `Output/VTK/3D` for 3D data and `Output/VTK/Surface` for surface data. These  
+can be visualized in VisIt or ParaView. 
 
 5. The following directories are to be copied into the ERF run directory.  
 `Output/3D`- The binary files (`*bin`) for lateral forcing.   
 `Output/Surface` -  The binary files (`*.bin`) for surface fluxes.  
 The first file in `Output/3D` can be used as the initial condition file.
 
-## Examples
-
-Various example inputs for different hurricanes are provided in this folder. For eg. for a 3-day hindcasting  
-for Hurricane Henri
-
-1. Run `srun -n 32 python3 WriteICFromERA5Data.py input_for_Henri --do_forecast=true --forecast_time_hours=72 --interval_hours=3`
-2. Visualize the VTK files in the `Output/VTK` directory in VisIt or ParaView.
+Various example inputs for different hurricanes are provided in this folder. 
 
