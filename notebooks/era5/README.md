@@ -16,16 +16,25 @@ area: 50,-130,10,-50
 ```
 Note: The geographical area is specified as latitude maximum, longitude minimum, latitude minimum, longitude maximum.
 
-3. `python3 WriteICFromERA5Data.py <input_file>`   
-The `input_file` is the text file in step 2. If any packages are missing, install them using `pip install <package>`
+3. `python3 WriteICFromERA5Data.py <input_file> --do_forecast=true --forecast_time_hours=72 --interval=3`      
+The `input_file` is the text file in step 2. The `forecast_time_hours` specifier is the time in hours   
+for which the forecast needs to be done starting from the date and time specified in the `input_file`.   
+The `interval` specifier takes the interval in hours to download the weather data.   
+If any packages are missing, install them using `pip install <package>`  
+So for eg., 
+`srun -n 32 python3 WriteICFromERA5Data.py input_for_Henri --do_forecast=true --forecast_time_hours=72 --interval_hours=3`  
+Will download and process the weather data for a total of 72 hours with an interval of 3 hours.   
 
-4. The output VTK files for visualization is written into a directory `Output`. The initial condition binary file (`*bin`) for ERF   
-is also written into `Output`.
+4. The output VTK files for visualization is written into  `Output/VTK/3D` for 3D data and   
+`Output/VTK/Surface` for surface data.  
+The binary files (`*bin`) for lateral forcing are written into `Output/3D`.   
+The binary files (`*.bin`) for surface fluxes are written into `Output/Surface`.  
 
 ## Examples
 
-Example inputs are given in the input file `input_for_Laura` and `input_for_Henri`. 
+Various example inputs for different hurricanes are provided in this folder. For eg. for a 3-day hindcasting  
+for Hurricane Henri
 
-1. Run `python3 WriteICFromERA5Data.py input_for_Laura`.  
-2. Visualize the VTK files in the `Output` directory in VisIt or ParaView.
+1. Run `srun -n 32 python3 WriteICFromERA5Data.py input_for_Henri --do_forecast=true --forecast_time_hours=72 --interval_hours=3`
+2. Visualize the VTK files in the `Output/VTK` directory in VisIt or ParaView.
 
