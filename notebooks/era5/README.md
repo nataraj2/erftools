@@ -22,8 +22,10 @@ This uses 32 MPI ranks to download and process the weather data for hurricane He
 
 4. The output VTK files for visualization is written into  `Output/VTK/3D` for 3D data and   
 `Output/VTK/Surface` for surface data.  
-The binary files (`*bin`) for lateral forcing are written into `Output/3D`.   
-The binary files (`*.bin`) for surface fluxes are written into `Output/Surface`.  
+
+5. The following directories are to be copied into the ERF run directory.
+`Output/3D`- The binary files (`*bin`) for lateral forcing.   
+`Output/Surface` -  The binary files (`*.bin`) for surface fluxes.
 
 ## Examples
 
