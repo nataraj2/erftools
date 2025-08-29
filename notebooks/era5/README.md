@@ -1,4 +1,4 @@
-# Read weather data from ERA5 and write files for initial condition, lateral forcing, and surfaces fluxes for ERF
+# Read weather data from ERA5 and write files for initial condition, lateral forcing, and surface fluxes for ERF
 
 This directory contains the python scripts to write the initial condition file, lateral forcing files and surface fluxes files  
 for hurricane simulations in ERF from the ERA5 weather data.
