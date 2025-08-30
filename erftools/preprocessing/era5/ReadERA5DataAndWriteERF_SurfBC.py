@@ -516,7 +516,7 @@ def ReadERA5_SurfaceData(file_path, lambert_conformal):
 
     output_vtk = "./Output/VTK/Surface/ERA5Domain/ERA5_Surface_" + date_time_forecast_str + ".vtk"
 
-    output_binary = "./Output/Surface/ERF_Surface_" + date_time_forecast_str + ".bin"
+    output_binary = "./Output/ERA5Data_Surface/ERF_Surface_" + date_time_forecast_str + ".bin"
     
     write_binary_vtk_structured_grid(output_vtk, x_grid, y_grid, z_grid, nz, k_to_delete, True, scalars)
 
@@ -545,7 +545,7 @@ def download_one_timestep(cds_client, dataset, request, output_filename, idx):
 # Main download routine
 # --------------------------
 
-def Download_ERA5_ForecastSurfaceData(inputs_file):
+def Download_ERA5_ForecastSurfaceData(inputs_file, forecast_time, interval):
     user_inputs = read_user_input(inputs_file)
 
     dataset = "reanalysis-era5-single-levels"
@@ -567,7 +567,7 @@ def Download_ERA5_ForecastSurfaceData(inputs_file):
     )
 
     # 72 hours with 6-hour interval
-    timestamps = generate_timestamps(start_time, hours=72, interval=3)
+    timestamps = generate_timestamps(start_time, forecast_time, interval)
 
      # MPI setup
     comm = MPI.COMM_WORLD

@@ -257,8 +257,24 @@ def find_erf_domain_extents(x_grid, y_grid, nx, ny):
 
     ymin = max(y1,y2) + 100e3
 
-    print("geometry.prob_lo  = ",  np.ceil(xmin+50e3), np.ceil(ymin+50e3), 0.0)
-    print("geometry.prob_hi  = ",  np.floor(xmax-50e3), np.floor(ymax-50e3), 25000.0)
+    filename = "Output/domain_extents.txt"
+
+    try:
+        # Use exclusive creation mode ("x") so only one rank succeeds
+        with open(filename, "x") as f:
+            print("geometry.prob_lo  =",
+                   np.ceil(xmin + 50e3),
+                   np.ceil(ymin + 50e3),
+                   0.0,
+                   file=f)
+            print("geometry.prob_hi  =",
+                   np.floor(xmax - 50e3),
+                   np.floor(ymax - 50e3),
+                   25000.0,
+                   file=f)
+    except FileExistsError:
+        # Another rank already wrote the file — just skip
+        pass
 
     return xmin, xmax, ymin, ymax
 

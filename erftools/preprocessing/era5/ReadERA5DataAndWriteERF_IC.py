@@ -353,7 +353,7 @@ def ReadERA5_3DData(file_path, lambert_conformal):
 
     output_vtk = "./Output/VTK/3D/ERA5Domain/ERA5_" + date_time_forecast_str + ".vtk"
 
-    output_binary = "./Output/3D/ERF_IC_" + date_time_forecast_str + ".bin"
+    output_binary = "./Output/ERA5Data_3D/ERF_IC_" + date_time_forecast_str + ".bin"
 
     write_binary_vtk_structured_grid(output_vtk, x_grid, y_grid, z_grid,
                                      nz, k_to_delete, True,

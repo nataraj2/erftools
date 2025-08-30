@@ -39,7 +39,7 @@ def download_one_timestep(cds_client, dataset, request, output_filename, idx):
     print(f"[{idx}] Done: {output_filename}")
 
 
-def Download_ERA5_ForecastData(inputs_file):
+def Download_ERA5_ForecastData(inputs_file, forecast_time, interval):
     user_inputs = read_user_input(inputs_file)
 
     dataset = "reanalysis-era5-pressure-levels"
@@ -73,7 +73,7 @@ def Download_ERA5_ForecastData(inputs_file):
         int(user_inputs["time"].split(":")[0])
     )
 
-    timestamps = generate_timestamps(start_time)
+    timestamps = generate_timestamps(start_time, forecast_time, interval)
 
      # MPI setup
     comm = MPI.COMM_WORLD
