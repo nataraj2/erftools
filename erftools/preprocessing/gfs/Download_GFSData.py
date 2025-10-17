@@ -5,6 +5,10 @@ import sys
 import os
 from tqdm import tqdm
 import threading
+from mpi4py import MPI
+from pathlib import Path
+import requests  # assuming download_one_with_progress uses requests
+
 
 def read_user_input(filename):
     inputs = {}
@@ -110,17 +114,51 @@ def download_one_with_progress(url, filename, position):
     pbar.close()
 
 
+
+def download_one(url, fname, rank):
+    """Simple download function with skip if file exists."""
+    if os.path.exists(fname):
+        print(f"[Rank {rank}] Skipping {fname} (already exists)", flush=True)
+        return
+
+    response = requests.get(url, stream=True)
+    with open(fname, 'wb') as f:
+        for chunk in response.iter_content(chunk_size=8192):
+            f.write(chunk)
+    print(f"[Rank {rank}] Downloaded {fname}", flush=True)
+
+
 def Download_GFS_ForecastData(inputs):
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+    size = comm.Get_size()
+
     data = read_user_input(inputs)
     lat_max, lon_min, lat_min, lon_max = data.get('area')
 
     urls, filenames = generate_urls_for_24_hours(data)
 
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        for i, (url, fname) in enumerate(zip(urls, filenames)):
-            executor.submit(download_one_with_progress, url, fname, i)
+    maximum_download_ranks = 32
+
+    # Only use ranks up to maximum_download_ranks
+    if rank < maximum_download_ranks:
+        urls_for_rank = urls[rank::maximum_download_ranks]
+        filenames_for_rank = filenames[rank::maximum_download_ranks]
+        for url, fname in zip(urls_for_rank, filenames_for_rank):
+            download_one(url, fname, rank)
+    else:
+        filenames_for_rank = []
+
+    # Every rank contributes its file list
+    all_filenames_lists = comm.allgather(filenames_for_rank)
+
+    # Flatten
+    all_filenames = [f for sublist in all_filenames_lists for f in sublist]
 
     area = [lat_max, lon_min, lat_min, lon_max]
-    return filenames, area
 
+    # Only rank 0 reports when downloads are complete
+    if rank == 0:
+        print(f"✅  All downloads completed (or skipped): {len(all_filenames)} files total")
 
+    return all_filenames, area

@@ -445,7 +445,7 @@ def write_binary_vtk_cartesian(date_time_forecast_str, output_binary, domain_lat
                 print("Variable not found in scalars list", name)
                 #sys.exit()
 
-    output_cart_vtk = "./Output/" + "ERF_IC_" + date_time_forecast_str +".vtk"
+    output_cart_vtk = "./Output/VTK/3D/ERFDomain/ERF_IC_" + date_time_forecast_str +".vtk"
 
     tmp = []
     print("Writing write_binary_vtk_cartesian_file")

@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import sys
 import os
 from scipy.interpolate import interp1d
+import gc
 
 from erftools.preprocessing import calculate_utm_zone
 from erftools.preprocessing import write_binary_vtk_structured_grid
@@ -70,9 +71,9 @@ def ReadGFS_3DData(file_path, area, lambert_conformal):
                 forecast_hour = grb.forecastTime
 
                 minute = grb.minute if hasattr(grb, 'minute') else 0
-                print(f"Date: {year}-{month:02d}-{day:02d}, Time: {hour:02d}:{minute:02d} UTC")
+                print(f"Date: {year}-{month:02d}-{day:02d}, Time: {hour:02d}:{minute:02d} UTC", flush=True)
                 date_time_forecast_str = f"{year:04d}_{month:02d}_{day:02d}_{hour:02d}_{minute:02d}_{forecast_hour:03d}"
-                print(f"Datetime string: {date_time_forecast_str}")
+                print(f"Datetime string: {date_time_forecast_str}", flush=True)
                 printed_time = True
 
             #print(f"Variable: {grb.name}, Level: {grb.level}, Units: {grb.parameterUnits}")
@@ -133,17 +134,14 @@ def ReadGFS_3DData(file_path, area, lambert_conformal):
     temp_3d_hr3 = np.stack(temp_3d_hr3, axis=0)
     vort_3d_hr3 = np.stack(vort_3d_hr3, axis=0)
 
-
-        
-
     #pressure_3d_hr3 = np.stack(pressure_3d_hr3, axis=0)
     # Get the size of each dimension
     dim1, dim2, dim3 = ght_3d_hr3.shape
 
     # Print the sizes
-    print(f"Size of dimension 1: {dim1}")
-    print(f"Size of dimension 2: {dim2}")
-    print(f"Size of dimension 3: {dim3}")
+    print(f"Size of dimension 1: {dim1}", flush=True)
+    print(f"Size of dimension 2: {dim2}", flush=True)
+    print(f"Size of dimension 3: {dim3}", flush=True)
 
     # Convert pressure levels to numpy array for indexing
     pressure_levels = np.array(pressure_levels)
@@ -153,7 +151,7 @@ def ReadGFS_3DData(file_path, area, lambert_conformal):
     unique_lats = np.unique(lats[:, 0])  # Take the first column for unique latitudes
     unique_lons = np.unique(lons[0, :])  # Take the first row for unique longitudes
 
-    print("Min max lat lons are ", unique_lats[0], unique_lats[-1], unique_lons[0], unique_lons[-1]);
+    print("Min max lat lons are ", unique_lats[0], unique_lats[-1], unique_lons[0], unique_lons[-1], flush=True);
 
 
     nlats = len(unique_lats)
@@ -164,7 +162,7 @@ def ReadGFS_3DData(file_path, area, lambert_conformal):
     lat_min = area[2]
     lon_max = 360.0 + area[3]
 
-    print("Lat/lon min/max are ", lat_min, lat_max, lon_min, lon_max)
+    print("Lat/lon min/max are ", lat_min, lat_max, lon_min, lon_max, flush=True)
 
     # Example: regular grid
     lat_resolution = unique_lats[1] - unique_lats[0]
@@ -178,13 +176,13 @@ def ReadGFS_3DData(file_path, area, lambert_conformal):
     domain_lats = unique_lats[lat_start:lat_end+1]
     domain_lons = unique_lons[lon_start:lon_end+1]
 
-    print("The min max are",(lat_start, lat_end, lon_start, lon_end));
+    print("The min max are",(lat_start, lat_end, lon_start, lon_end), flush=True);
 
     nx = domain_lats.shape[0]
     ny = domain_lons.shape[0]
 
-    print("nx and ny here are ", nx, ny)
-   
+    print("nx and ny here are ", nx, ny, flush=True)
+
     ght_3d_hr3   = ght_3d_hr3[:, nlats-lat_end-1:nlats-lat_start, lon_start:lon_end+1]  
     uvel_3d_hr3  = uvel_3d_hr3[:, nlats-lat_end-1:nlats-lat_start, lon_start:lon_end+1]
     vvel_3d_hr3  = vvel_3d_hr3[:, nlats-lat_end-1:nlats-lat_start, lon_start:lon_end+1]
@@ -196,20 +194,19 @@ def ReadGFS_3DData(file_path, area, lambert_conformal):
     temp_3d_hr3  = temp_3d_hr3[:, nlats-lat_end-1:nlats-lat_start, lon_start:lon_end+1]
     vort_3d_hr3  = vort_3d_hr3[:, nlats-lat_end-1:nlats-lat_start, lon_start:lon_end+1]
 
-    print("Size of rh_3d_hr3 is ", rh_3d_hr3.shape[0])
-
+    print("Size of rh_3d_hr3 is ", rh_3d_hr3.shape[0], flush=True)
 
     prev_mean = np.mean(ght_3d_hr3[0])  # start from the top level
     for k in range(1, ght_3d_hr3.shape[0]):
         current_mean = np.mean(ght_3d_hr3[k])
-        print("Val is", k, current_mean)
+        print("Val is", k, current_mean, flush=True)
         if current_mean >= prev_mean:
             nz_admissible = k
-            print(f"Mean starts increasing at index {k}")
+            print(f"Mean starts increasing at index {k}", flush=True)
             break
         prev_mean = current_mean
     else:
-        print("Means are strictly decreasing through all levels.")
+        print("Means are strictly decreasing through all levels.", flush=True)
 
     # GFS does not store the data of velocities on the bottom 2 levels
     # Hence doing this. This was identified by using the grb.typeLevel="isobaricInhPA"
@@ -218,7 +215,7 @@ def ReadGFS_3DData(file_path, area, lambert_conformal):
     # but uvel_3d_hr3 is 31
     nz = nz_admissible-2
 
-    print("The number of lats and lons are levels are %d, %d, %d"%(lats.shape[0], lats.shape[1], nz));
+    print("The number of lats and lons are levels are %d, %d, %d"%(lats.shape[0], lats.shape[1], nz), flush=True);
 
     #sys.exit("Stopping the script here.")
 
@@ -253,7 +250,7 @@ def ReadGFS_3DData(file_path, area, lambert_conformal):
 
     k_to_delete = []
 
-    print("size is ", len(qv_3d_hr3))
+    print("size is ", len(qv_3d_hr3), flush=True)
     
     dirname = "./TypicalAtmosphereData/"
     pressure_filename = dirname + "pressure_vs_z_actual.txt"
@@ -322,7 +319,7 @@ def ReadGFS_3DData(file_path, area, lambert_conformal):
         ps = p_sat(temp_3d[:, :, k]);
         pv = rh_val/100.0*ps;
 
-        print("Avg val is ", k, np.mean(z_grid[:,:,k]),  )
+        print("Avg val is ", k, np.mean(z_grid[:,:,k]), flush=True)
 
 
 
@@ -342,7 +339,7 @@ def ReadGFS_3DData(file_path, area, lambert_conformal):
             for i in np.arange(0,nx,1):
                 for j in np.arange(0,ny,1):
                     if(pressure_3d[i, j, k] <= 0.0):
-                        print("Value here problematic ", i, j, pressure_3d[i, j, k],pressure_3d[i, j, k+1],temp_3d[i, j, k+1],qv_3d[i, j, k+1],z_grid[i,j,k],z_grid[i,j,k+1])
+                        print("Value here problematic ", i, j, pressure_3d[i, j, k],pressure_3d[i, j, k+1],temp_3d[i, j, k+1],qv_3d[i, j, k+1],z_grid[i,j,k],z_grid[i,j,k+1] , flush=True)
                 
 
         #pressure_typical_here = pressure_interp_func(np.mean(z_grid[:,:,k]));
@@ -411,9 +408,9 @@ def ReadGFS_3DData(file_path, area, lambert_conformal):
 
     forecast_hour = filename.split(".f")[1].split(".")[0]
 
-    output_vtk = "./Output/GFS_" + date_time_forecast_str + ".vtk"
+    output_vtk = "./Output/VTK/3D/GFSDomain/GFS_" + date_time_forecast_str + ".vtk"
 
-    output_binary = "./Output/ERF_IC_" + date_time_forecast_str + ".bin"
+    output_binary = "./Output/GFSData_3D/ERF_IC_" + date_time_forecast_str + ".bin"
 
     write_binary_vtk_structured_grid(output_vtk, x_grid, y_grid, z_grid,
                                      nz, k_to_delete, True,
