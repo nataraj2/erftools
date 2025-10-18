@@ -13,7 +13,7 @@ area: 50,-130,10,-50
 ```
 Note: The geographical area is specified as latitude maximum, longitude minimum, latitude minimum, longitude maximum.
 
-2. `srun -n 32 python3 WriteICFromERA5Data.py <input_file> --do_forecast=true`
+2. `srun -n 32 python3 WriteICFromGFSData.py <input_file> --do_forecast=true`
 The `input_file` is the text file in step 1. If any packages are missing, install them using `pip install <package>`. This will download   
 forecast data for 72 hours with an interval of 3 hours.
 
