@@ -13,8 +13,9 @@ area: 50,-130,10,-50
 ```
 Note: The geographical area is specified as latitude maximum, longitude minimum, latitude minimum, longitude maximum.
 
-2. `python3 WriteICFromGFSData.py <input_file>`   
-The `input_file` is the text file in step 1. If any packages are missing, install them using `pip install <package>`
+2. `srun -n 32 python3 WriteICFromERA5Data.py <input_file> --do_forecast=true`
+The `input_file` is the text file in step 1. If any packages are missing, install them using `pip install <package>`. This will download   
+forecast data for 72 hours with an interval of 3 hours.
 
 3. The output VTK files for visualization is written into a directory `Output`. The initial condition binary file (`*bin`) for ERF   
 is also written into `Output`.
@@ -23,6 +24,6 @@ is also written into `Output`.
 
 Example inputs are given in the input file `input_for_Laura` and `input_for_Henri`. 
 
-1. Run `python3 WriteICFromGFSData.py input_for_Laura`.  
+1. Run `python3 WriteICFromGFSData.py input_for_Laura --do_forecast=true`.  
 2. Visualize the VTK files in the `Output` directory in VisIt or ParaView.
 
