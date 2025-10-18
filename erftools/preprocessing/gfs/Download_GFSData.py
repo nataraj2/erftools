@@ -42,7 +42,8 @@ def generate_urls_for_24_hours(data):
     for fhour in range(0, 123, 3):
         fhour_str = f"f{fhour:03d}"
         filename = f"gfs.0p25.{yyyymmddhh}.{fhour_str}.grib2"
-        url = f"https://data-osdf.rda.ucar.edu/ncar/rda/d084001/{year}/{yyyymmdd}/{filename}"
+        #url = f"https://data-osdf.rda.ucar.edu/ncar/rda/d084001/{year}/{yyyymmdd}/{filename}"
+        url = f"https://osdf-data.gdex.ucar.edu/ncar/gdex/d084001/{year}/{yyyymmdd}/{filename}"
         urls.append(url)
         filenames.append(filename)
     return urls, filenames 
@@ -60,7 +61,8 @@ def construct_url_filename(data):
 
     # Historical forecast data
     filename = f"gfs.0p25.{yyyymmddhh}.f000.grib2"
-    url = f"https://data-osdf.rda.ucar.edu/ncar/rda/d084001/{year}/{yyyymmdd}/{filename}"
+    #url = f"https://data-osdf.rda.ucar.edu/ncar/rda/d084001/{year}/{yyyymmdd}/{filename}"
+    url = f"https://osdf-data.gdex.ucar.edu/ncar/gdex/d084001/{year}/{yyyymmdd}/{filename}"
 
     # Final reanalaysis data
     #filename = f"gdas1.fnl0p25.{yyyymmddhh}.f00.grib2"
