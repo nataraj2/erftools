@@ -418,7 +418,7 @@ def ReadGFS_3DData(file_path, area, lambert_conformal):
 
     write_binary_vtk_cartesian(date_time_forecast_str, output_binary, domain_lats, domain_lons,
                                x_grid, y_grid, z_grid,
-                               nx, ny, nz, k_to_delete, lambert_conformal, scalars)
+                               nx, ny, nz, k_to_delete, lambert_conformal, forecast_hour, scalars)
 
     scalars_for_ERF = {
          "theta": theta_3d,

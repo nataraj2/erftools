@@ -137,7 +137,7 @@ def WriteUSMapVTKFile(area, filename="USMap_LambertProj.vtk"):
 
     # Save to VTK
     polydata.save(filename)
-    WriteUSMapLegacyVTK("USMap_LambertProj_Final.vtk", all_points, lines_flat)
+    WriteUSMapLegacyVTK("USMap_LambertProj.vtk", all_points, lines_flat)
 
     print(f"Saved {filename}")
     return lambert_conformal

@@ -38,7 +38,7 @@ def p_sat(temp):
 
     return ps
 
-def ReadGFS_3DData_FourCastNetGFS(file_path, area, lambert_conformal):
+def ReadGFS_3DData_FourCastNetGFS(file_path, area, lambert_conformal, init_lon=-1e3, init_lat=-1e3, track_points=None):
     # Open the GRIB2 file
     pressure_levels = []
     ght_3d_hr3 = []
@@ -183,8 +183,7 @@ def ReadGFS_3DData_FourCastNetGFS(file_path, area, lambert_conformal):
 
     print("nx and ny here are ", nx, ny)
 
-    
-
+   
     ght_3d_hr3   = ght_3d_hr3[:, nlats-lat_end-1:nlats-lat_start, lon_start:lon_end+1]  
     uvel_3d_hr3  = uvel_3d_hr3[:, nlats-lat_end-1:nlats-lat_start, lon_start:lon_end+1]
     vvel_3d_hr3  = vvel_3d_hr3[:, nlats-lat_end-1:nlats-lat_start, lon_start:lon_end+1]
@@ -229,7 +228,7 @@ def ReadGFS_3DData_FourCastNetGFS(file_path, area, lambert_conformal):
     velocity = np.zeros((nx, ny, nz, 3))
 
     #vort_3d = np.zeros((nx, ny, nz))
-    #pressure_3d = np.zeros((nx, ny, nz))
+    pressure_3d = np.zeros((nx, ny, nz))
     #theta_3d = np.zeros((nx, ny, nz))
 
 
@@ -278,9 +277,18 @@ def ReadGFS_3DData_FourCastNetGFS(file_path, area, lambert_conformal):
 
         print("Avg val is ", k, np.mean(z_grid[:,:,k]),  )
 
+
+          # Assuming quantities at surface is same as the first cell
+        if(k==nz-1):
+            pressure_3d[:, :, k] = 1000.0 - 1000.0/(287*temp_3d[:, :, k])*const_g*z_grid[:,:,k]
+        else:
+            pressure_3d[:, :, k] = pressure_3d[:, :, k+1] - pressure_3d[:, :, k+1]/(287*temp_3d[:, :, k+1])*const_g*(z_grid[:,:,k]-z_grid[:,:,k+1])
+
+        rhod_3d[:,:,k] = pressure_3d[:, :, k]*100.0/(287.0*temp_3d[:, :, k])
         # Find indices of elements that are zero or less
         #indices = np.argwhere(qv_3d[:, :, k] <= 0)
         indices = np.argwhere(rh_val <= 0)
+
 
         # Print indices and values
         for index in indices:
@@ -298,6 +306,7 @@ def ReadGFS_3DData_FourCastNetGFS(file_path, area, lambert_conformal):
 
 
     scalars = {
+         "density": rhod_3d,
          "uvel": uvel_3d,
          "vvel": vvel_3d,
          "rh": rh_3d,
@@ -322,21 +331,28 @@ def ReadGFS_3DData_FourCastNetGFS(file_path, area, lambert_conformal):
     output_vtk = "./Output/VTK/3D/GFSDomain/GFS_" + date_time_forecast_str + ".vtk"
 
     output_binary = "./Output/GFSData_3D/ERF_IC_" + date_time_forecast_str + ".bin"
-    
-    write_binary_vtk_structured_grid(output_vtk, x_grid, y_grid, z_grid,
-                                     nz, k_to_delete, True,
-                                     scalars, velocity)
+
+    if(init_lon ==-1e3 and init_lat ==-1e3):
+        write_binary_vtk_structured_grid(output_vtk, x_grid, y_grid, z_grid,
+                                         nz, k_to_delete, True,
+                                         scalars, velocity)
 
     print("Values of nx and ny are ", nx, ny)
 
-    write_binary_vtk_cartesian(date_time_forecast_str, output_binary, domain_lats, domain_lons,
-                               x_grid, y_grid, z_grid,
-                               nx, ny, nz, k_to_delete, lambert_conformal, scalars)
+    if(init_lon !=-1e3 and init_lat !=-1e3):
+        write_binary_vtk_cartesian(date_time_forecast_str, output_binary, domain_lats, domain_lons,
+                                   x_grid, y_grid, z_grid,
+                                   nx, ny, nz, k_to_delete, lambert_conformal, forecast_hour, scalars, init_lon, init_lat, track_points)
+    else:
+        write_binary_vtk_cartesian(date_time_forecast_str, output_binary, domain_lats, domain_lons,
+                                   x_grid, y_grid, z_grid,
+                                   nx, ny, nz, k_to_delete, lambert_conformal, forecast_hour, scalars)
 
     scalars_for_ERF = {
          "uvel": uvel_3d,
          "vvel": vvel_3d,
     }
+
 
     #plot_1d(temp_3d, pressure_3d, theta_3d, qv_3d, qsat_3d, z_grid, k_to_delete)
 
