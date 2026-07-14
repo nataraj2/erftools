@@ -1,12 +1,12 @@
 # Read weather data from FourCastNetGFS and write forecast files for ERF
 
-Inference using FourCastNetGFS will have to be run before executing the routines in this directory.
+(Inference using FourCastNetGFS)[https://github.com/nataraj2/NOAA-EMC_FourCastNet/tree/inference]  will have to be run before executing the routines in this directory. See the `Examples` section in the (README)[https://github.com/nataraj2/NOAA-EMC_FourCastNet/tree/inference].
 
 This directory contains the python scripts to create forecast files for time-dependent boundary forcing  
  for hurricane simulations in ERF from the forecast weather data obtained from inference using the 
 AI model FourCastNetGFS.
 
-# Pre-requisites
+## Pre-requisites
 Install required python packages 
 ```
 MPICC=mpicc pip install --no-binary=mpi4py mpi4py
@@ -14,6 +14,8 @@ pip install f90nml
 pip install pydantic
 pip install pygrib
 ```
+
+## Run the python script 
 
 1. Give the year, month, day, time and the geographical area to download the data in a text file.  
 For example, to download the data on August 26, 2020 at 00:00 (24 hour format)
