@@ -6,6 +6,15 @@ This directory contains the python scripts to create forecast files for time-dep
  for hurricane simulations in ERF from the forecast weather data obtained from inference using the 
 AI model FourCastNetGFS.
 
+# Pre-requisites
+Install required python packages 
+```
+MPICC=mpicc pip install --no-binary=mpi4py mpi4py
+pip install f90nml
+pip install pydantic
+pip install pygrib
+```
+
 1. Give the year, month, day, time and the geographical area to download the data in a text file.  
 For example, to download the data on August 26, 2020 at 00:00 (24 hour format)
 ```
