@@ -1,6 +1,6 @@
 # Read weather data from FourCastNetGFS and write forecast files for ERF
 
-(Inference using FourCastNetGFS)[https://github.com/nataraj2/NOAA-EMC_FourCastNet/tree/inference]  will have to be run before executing the routines in this directory. See the `Examples` section in the (README)[https://github.com/nataraj2/NOAA-EMC_FourCastNet/tree/inference].
+[Inference using FourCastNetGFS](https://github.com/nataraj2/NOAA-EMC_FourCastNet/tree/inference)  will have to be run before executing the routines in this directory. See the `Examples` section in the [README](https://github.com/nataraj2/NOAA-EMC_FourCastNet/tree/inference).
 
 This directory contains the python scripts to create forecast files for time-dependent boundary forcing  
  for hurricane simulations in ERF from the forecast weather data obtained from inference using the 
