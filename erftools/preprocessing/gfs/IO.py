@@ -302,6 +302,88 @@ def hurricane_eye_tracker(x_grid, y_grid, lambert_conformal,
 		with open(filename, "a") as f:
 			f.write(f"{forecast_hour_num:.6f} {lon_pt:.6f} {lat_pt:.6f}\n")
 
+def write_max_velocity(
+		x_grid,
+		y_grid,
+		z_grid,
+		lambert_conformal,
+		uvel_erf,
+		vvel_erf,
+		init_lon,
+		init_lat,
+		forecast_hour):
+
+	transformer = Transformer.from_crs(
+		"EPSG:4326", lambert_conformal, always_xy=True
+	)
+
+	track_file = "Output/hurricane_track_latlon.txt"
+	output_file = "Output/hurricane_max_velocity.txt"
+
+	os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
+	x_grid = np.asarray(x_grid)
+	y_grid = np.asarray(y_grid)
+
+	# --------------------------------------------------------
+	# Determine hurricane center
+	# --------------------------------------------------------
+	if os.path.exists(track_file) and os.stat(track_file).st_size > 0:
+
+		with open(track_file, "r") as f:
+			lines = f.readlines()
+
+		_, center_lon, center_lat = map(float, lines[-1].split())
+
+	else:
+		center_lon = init_lon
+		center_lat = init_lat
+
+	center_x, center_y = transformer.transform(center_lon, center_lat)
+
+	# --------------------------------------------------------
+	# Build 200-km mask
+	# --------------------------------------------------------
+	radius = 200.0e3  # meters
+
+	dist2 = (x_grid - center_x)**2 + (y_grid - center_y)**2
+	mask = dist2 <= radius**2
+
+	if not np.any(mask):
+		print("Warning: No grid points found within 200 km radius.")
+		return
+
+	# --------------------------------------------------------
+	# Velocity magnitude (same level as eye tracker)
+	# --------------------------------------------------------
+	k = 3
+
+	u_slice = uvel_erf[:, :, k].T
+	v_slice = vvel_erf[:, :, k].T
+
+	vel_mag = np.sqrt(u_slice**2 + v_slice**2)
+
+	# Maximum velocity inside hurricane region
+	max_velocity = np.max(vel_mag[mask])*3.6/1.852 # converting to knots
+
+	forecast_hour_num = int(forecast_hour[1:])
+
+	print(
+		f"Hour {forecast_hour_num}: "
+        f"z value is {z_grid[0,0,k]}:"
+        f"center_lon {center_lon}: "
+        f"center_lat {center_lat}: "
+        f"center_x {center_x}: "
+        f"center_y {center_y}: "
+		f"Max velocity within 200 km = {max_velocity:.3f} knots"
+	)
+
+	# --------------------------------------------------------
+	# Append result to output file
+	# --------------------------------------------------------
+	with open(output_file, "a") as f:
+		f.write(f"{forecast_hour_num:d} {max_velocity:.6f}\n")
+
 
 def find_latlon_indices(domain_lons, domain_lats, lon, lat):
 	nlats = len(domain_lats)
@@ -594,4 +676,5 @@ def write_binary_vtk_cartesian(date_time_forecast_str, output_binary, domain_lat
 	if(init_lon != -1e3 and init_lat != -1e3):
 		hurricane_eye_tracker(x_grid_erf, y_grid_erf, lambert_conformal,
 							  uvel_erf, vvel_erf, init_lon, init_lat, forecast_hour, track_points)
+		write_max_velocity(x_grid_erf, y_grid_erf, z_grid_erf, lambert_conformal, uvel_erf, vvel_erf, init_lon, init_lat, forecast_hour)
 

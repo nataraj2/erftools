@@ -62,6 +62,7 @@ def ReadGFS_3DData_FourCastNetGFS(file_path, area, lambert_conformal, init_lon=-
     with pygrib.open(file_path) as grbs:
         for grb in grbs:
 
+                
             if not printed_time:
                 year = grb.year
                 month = grb.month
@@ -216,21 +217,19 @@ def ReadGFS_3DData_FourCastNetGFS(file_path, area, lambert_conformal, init_lon=-
     rhod_3d = np.zeros((nx, ny, nz))
     uvel_3d = np.zeros((nx, ny, nz))
     vvel_3d = np.zeros((nx, ny, nz))
-    #wvel_3d = np.zeros((nx, ny, nz))
-    #theta_3d = np.zeros((nx, ny, nz))
-    #qv_3d = np.zeros((nx, ny, nz))
-    #qc_3d = np.zeros((nx, ny, nz))
-    #qr_3d = np.zeros((nx, ny, nz))
+    wvel_3d = np.zeros((nx, ny, nz))
+    theta_3d = np.zeros((nx, ny, nz))
+    qv_3d = np.zeros((nx, ny, nz))
+    qc_3d = np.zeros((nx, ny, nz))
+    qr_3d = np.zeros((nx, ny, nz))
     rh_3d = np.zeros((nx, ny, nz))
     temp_3d = np.zeros((nx, ny, nz))
-    #qsat_3d = np.zeros((nx, ny, nz))
+    qsat_3d = np.zeros((nx, ny, nz))
 
     velocity = np.zeros((nx, ny, nz, 3))
 
-    #vort_3d = np.zeros((nx, ny, nz))
     pressure_3d = np.zeros((nx, ny, nz))
-    #theta_3d = np.zeros((nx, ny, nz))
-
+    vort_3d = np.zeros((nx, ny, nz))
 
     # Create meshgrid
     x_grid, y_grid = np.meshgrid(domain_lons, domain_lats)
@@ -275,7 +274,7 @@ def ReadGFS_3DData_FourCastNetGFS(file_path, area, lambert_conformal, init_lon=-
         rh_3d[:, :, k] = rh_at_lev
         rh_val = rh_at_lev
 
-        print("Avg val is ", k, np.mean(z_grid[:,:,k]),  )
+        print("Avg val is ", k, np.mean(z_grid[:,:,k]),  np.mean(temp_3d[:,:,k]))
 
 
           # Assuming quantities at surface is same as the first cell
@@ -285,6 +284,18 @@ def ReadGFS_3DData_FourCastNetGFS(file_path, area, lambert_conformal, init_lon=-
             pressure_3d[:, :, k] = pressure_3d[:, :, k+1] - pressure_3d[:, :, k+1]/(287*temp_3d[:, :, k+1])*const_g*(z_grid[:,:,k]-z_grid[:,:,k+1])
 
         rhod_3d[:,:,k] = pressure_3d[:, :, k]*100.0/(287.0*temp_3d[:, :, k])
+
+        theta_3d[:,:,k] = temp_3d[:, :, k]*(1000.0/pressure_3d[:, :, k])**(287.0/1004.5)
+
+
+        Tc = temp_3d[:, :, k] - 273.15
+        # saturation vapor pressure (hPa)
+        es = 6.112 * np.exp(17.67 * Tc / (Tc + 243.5))
+        # actual vapor pressure (hPa)
+        e = (rh_3d[:, :, k] / 100.0) * es
+        # specific humidity (kg/kg)
+        qv_3d[:, :, k] = 0.622 * e / (pressure_3d[:, :, k] - 0.378 * e)
+
         # Find indices of elements that are zero or less
         #indices = np.argwhere(qv_3d[:, :, k] <= 0)
         indices = np.argwhere(rh_val <= 0)
@@ -304,15 +315,23 @@ def ReadGFS_3DData_FourCastNetGFS(file_path, area, lambert_conformal, init_lon=-
         #print(f"Lat and lon are: {lat_grid[0,0]:.2f}, {lon_grid[0,0]:.2f}")
         #print(f"Temperature: {temp_3d[0,0,k]:.2f} K, Pressure: {pressure_3d[0,0,k]:.2f}, Geo height : {z_grid[0,0,k]:.2f} ")
 
-
     scalars = {
+         #"latitude": None,
+         #"longitude": None,
          "density": rhod_3d,
          "uvel": uvel_3d,
          "vvel": vvel_3d,
+         "wvel": wvel_3d,
+         "theta": theta_3d,
+         "qv": qv_3d,
+         "qc": qc_3d,
+         "qr": qr_3d,
          "rh": rh_3d,
          "temperature": temp_3d,
+         "vorticity": vort_3d,
+         "pressure": pressure_3d,
+         "qsat": qsat_3d,
     }
-
 
     dir_path = "Images"
     os.makedirs(dir_path, exist_ok=True)
