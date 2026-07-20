@@ -408,10 +408,10 @@ def ReadERA5_SurfaceData(file_path, lambert_conformal):
                 # Append temperature values
                 sea_surf_temp_era5.append(grb.values)
     
-            if "Surface sensible heat flux" in grb.name:
+            if "Time-integrated surface sensible heat net flux" in grb.name:
                 surf_sen_hf_era5.append(grb.values)
         
-            if "Surface latent heat flux" in grb.name:
+            if "Time-integrated surface latent heat net flux" in grb.name:
                 surf_lat_hf_era5.append(grb.values)
 
             if "Friction velocity" in grb.name:
